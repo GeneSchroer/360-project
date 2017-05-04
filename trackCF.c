@@ -50,6 +50,13 @@ void * getFileName(pid_t child, long address) {
 	return ret;
 }
 
+//given a file descriptor, gets the file name associated with it
+//the pointer to this must be freed
+void * getFileName2(int fd) {
+	struct stat sb;
+	
+}
+
 int main() {
 	pid_t child;	
 	//keep track of all syscalls
@@ -76,9 +83,16 @@ int main() {
 			ptrace(PTRACE_GETREGS, child, NULL, &regs);
 			printf("syscall %ld\n", regs.orig_eax);
 			countCalls[regs.orig_eax]++;
+			//IDEA: This .c file will be the dry run. It will record all syscalls and file I/O
+			//and put this into a log file. The wet run could be a separate program that reads
+			//this log file.
+
+			//Example log:
+			//(SYSCALL #) (ORDER OF ARGUMENTS AS THEY APPEAR AT http://syscalls.kernelgrok.com/)
 			
-			//the open or create syscall
-			if ((regs.orig_eax == 5) || (regs.orig_eax == 8)) {
+			//the open, create or unlink syscall
+			//for open and openat, should also get the flag (read,write,etc.)
+			if ((regs.orig_eax == 5) || (regs.orig_eax == 8) || (regs.orig_eax == 10)) {
 				void * fileName = getFileName(child, regs.ebx);
 				printf("file: %s\n", (char *) fileName);
 				free(fileName);
@@ -91,10 +105,20 @@ int main() {
 			}
 			//the read, write, or close syscall
 			if ((regs.orig_eax == 3) || (regs.orig_eax == 4) || (regs.orig_eax == 6)) {
-				int actualFd = ptrace(PTRACE_PEEKDATA, child, regs.ebx, NULL);
-				printf("descriptor:%d\n", actualFd);
+				printf("descriptor:%ld\n", regs.ebx);
 			}
+			//the rename syscall
+			if (regs.orig_eax == 38) {
 
+			}
+			//the renameat syscall
+			if (regs.orig_eax == 302) {
+
+			}
+			//the unlinkat syscall
+			if (regs.orig_eax == 301) {
+
+			}
 			ptrace(PTRACE_SYSCALL, child, 0, 0);
 		}
 

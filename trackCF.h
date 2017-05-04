@@ -7,6 +7,8 @@
 #include <sys/reg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <limits.h>
 
 void printCalls(int * array, int max);
 
