@@ -16,5 +16,8 @@ lengths:
 testOpen:
 	$(CC) $(CFLAGS) -o testOpen testOpen.c
 
+ids:
+	$(CC) include/ids.h src/ids.c src/training.c src/defense.c -o IDS -Iinclude
+
 clean:
 	rm $(OBJECTS) 
