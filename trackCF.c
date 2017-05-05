@@ -89,7 +89,7 @@ void * getFileName2(unsigned int fd, pid_t child) {
 		if ((c == '\0') || (c == '\n'))
 			break;
 		else {
-			if (append(result, size, c)) {
+			if (strlen(result) + 1 >= size) {
 				size *= 1.2;
 				result = realloc(result, size);
 			}
