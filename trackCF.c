@@ -50,20 +50,57 @@ void * getFileName(pid_t child, long address) {
 	return ret;
 }
 
+//retrieve the number of digits in a number
+int getLength(int number) {
+	int counter = 0;
+	for(; number!=0; number /= 10) {counter++;}
+	return counter;
+}
+
+//append a char to the end of a string. return 1 (failure) if unable to, else 0
+int append(char * s, int size, char c) {
+	if (strlen(s) + 1 >= size)
+		return 1;
+	int len = strlen(s);
+	s[len] = c;
+	s[len + 1] = '\0';
+	return 0;
+}
+
 //given a file descriptor, gets the file name associated with it
 //the pointer to this must be freed
-void * getFileName2(unsigned int fd) {
-	struct stat sb;
-	ino_t inodeNum;
-	if (fstat(fd, &sb) == -1) {
-		char errorNo[10];
-		sprintf(errorNo, "%d", errno);
-		perror(errorNo);
-		return NULL;
-	}
-	inodeNum = sb.st_ino;
-	printf("inode: %lu", inodeNum);
-	return NULL;
+void * getFileName2(unsigned int fd, pid_t child) {
+	//printf("child: %d\n", child);
+	//printf("fd: %d\n", fd);
+	//get the lengths of the integers to allocate the appropriate amount
+	int fdLength = getLength(fd);
+	int pidLength = getLength(child);
+	//now build the command
+	char * command = calloc(17 + fdLength + pidLength, 1);
+	sprintf(command, "./findFileName %u %u", child, fd);
+	//printf("cmd: %s\n", command);
+	
+	FILE * fp = popen(command, "r");
+	int size = 50;
+	char * result = calloc(size, 1);
+	char c;
+	do {
+		c = fgetc(fp);
+		if ((c == '\0') || (c == '\n'))
+			break;
+		else {
+			if (append(result, size, c)) {
+				size *= 1.2;
+				result = realloc(result, size);
+			}
+			else {
+				append(result, size, c);
+			}
+		}
+	}while (!feof(fp));
+	
+	free(command);
+	return result;
 }
 
 int main() {
@@ -114,7 +151,7 @@ int main() {
 			}
 			//the read, write, or close syscall
 			if ((regs.orig_eax == 3) || (regs.orig_eax == 4) || (regs.orig_eax == 6)) {
-				void * fileName = getFileName2(regs.ebx);
+				void * fileName = getFileName2(regs.ebx, child);
 				printf("file: %s\n", (char *) fileName);
 				printf("descriptor:%ld\n", regs.ebx);
 				free(fileName);
