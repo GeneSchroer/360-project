@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <limits.h>
+#include <errno.h>
 
 void printCalls(int * array, int max);
 

@@ -54,7 +54,40 @@ void * getFileName(pid_t child, long address) {
 //the pointer to this must be freed
 void * getFileName2(int fd) {
 	struct stat sb;
-	
+	ssize_t result, bufSize;
+	char fdPath[19] = {0};
+	char * format = "/proc/self/fd/%d";
+	char * link;
+	//first get the symlink, which is located at /proc/self/fd/ACTUAL_FD where ACTUAL_FD is int fd
+	sprintf(fdPath, format, fd);
+	printf("path length: %d ", strlen(fdPath));
+	printf("path; %s\n", fdPath);
+
+	//if failure, return null
+	if (lstat(fdPath, &sb) == -1) {
+		char errorNo[10];
+		sprintf(errorNo, "%d", errno);
+		perror(errorNo);
+		return NULL;
+	}
+	//we need lstat to determine the length of the name of the file
+	bufSize = sb.st_size + 1;
+	printf("buffersize: %d\n", bufSize);
+	if (sb.st_size == 0)
+		bufSize = PATH_MAX;
+
+	link = malloc(bufSize);
+	//if malloc error, return null
+	if (link == NULL) {
+		return NULL;
+	}
+	result = readlink(fdPath, link, bufSize);
+	//if readlink fails, return null
+	if (result == -1) {
+		return NULL;
+	}
+	link[result] = '\0';
+	return link;
 }
 
 int main() {
@@ -105,7 +138,10 @@ int main() {
 			}
 			//the read, write, or close syscall
 			if ((regs.orig_eax == 3) || (regs.orig_eax == 4) || (regs.orig_eax == 6)) {
+				void * fileName = getFileName2(regs.ebx);
+				printf("file: %s\n", (char *) fileName);
 				printf("descriptor:%ld\n", regs.ebx);
+				free(fileName);
 			}
 			//the rename syscall
 			if (regs.orig_eax == 38) {
