@@ -1,6 +1,6 @@
 #include "ids.h"
 
-void run_training_mode(char *pathname, char** new_argv){
+void run_defense_mode(char *pathname, char** new_argv){
   pid_t child;
   long orig_eax;
   child = fork();

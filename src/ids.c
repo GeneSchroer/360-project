@@ -1,8 +1,4 @@
-#include<stdio.h>
-#include<unistd.h>
-#include<stdlib.h>
-#include<sys/types.h>
-#include<sys/stat.h>
+#include "ids.h"
 
 extern char *optarg;
 
@@ -12,39 +8,49 @@ struct stat *buf = malloc(sizeof(struct stat));
 struct stat *lbuf = malloc(sizeof(struct stat));
 int opt;
 
+
+ void run_defense_mode(char* pathname, char** new_argv);
+ void run_training_mode(char* pathname, char** new_argv);
+ 
 if(argc<3){
 
     printf("Usage: ./ids -T|-D FILE [args] \n");
     return -1;
 }
-
-if( stat(argv[2], buf) == -1){
+ char* pathname = argv[2];
+ 
+if( stat(pathname, buf) == -1){
 printf("Error: Not a valid file!\n");
 return -1;
 }
 
-char **new_argv = (argv+3);
+ 
+ char **new_argv = malloc(sizeof(char**) * (argc-1) );
+ new_argv[0] = pathname;
+ int i, j;
+ for(i = 1, j = 3; j<argc; i++, j++){
+   new_argv[i] = argv[j];
+
+ }
+ new_argv[i]=NULL;
 
 
-
-if(opt = getopt(argc, argv[1], "DT") != -1){
+ opt = argv[1][1];
 switch(opt){
  case 'D':
-   printf("Running defence mode\n");
-   break;
+   printf("Running Defense Mode\n");
+   run_defense_mode(pathname, new_argv);
+   return 0;
     
  case 'T':
-   printf("Running training mode\n");
-      break;
+   printf("Running Training Mode\n");
+   run_training_mode(pathname, new_argv);
+   return 0;
  default:
    printf("Error: Not a valid option!\n");
    return -1;
-    }
-  }
-  else{
-    printf("Error: Not an option!\n");
-    return -1;
-  }
+ }
+  
 
 
 

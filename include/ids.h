@@ -1,6 +1,6 @@
-#IFNDEF IDSHEADER
+#ifndef IDSHEADER
 
-#DEFINE IDSHEADER
+#define IDSHEADER
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,4 +12,4 @@
 #include <sys/wait.h>
 #include <sys/reg.h>
 
-#ENDIF
+#endif
