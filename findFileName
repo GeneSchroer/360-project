@@ -1,0 +1,4 @@
+#!/bin/bash
+PROCESS_ID=`pidof $1`;
+FOUND=`ls -l /proc/*/fd/$2 | grep $PROCESS_ID`;
+perl regex.pl "$FOUND"

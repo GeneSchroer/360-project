@@ -52,42 +52,18 @@ void * getFileName(pid_t child, long address) {
 
 //given a file descriptor, gets the file name associated with it
 //the pointer to this must be freed
-void * getFileName2(int fd) {
+void * getFileName2(unsigned int fd) {
 	struct stat sb;
-	ssize_t result, bufSize;
-	char fdPath[19] = {0};
-	char * format = "/proc/self/fd/%d";
-	char * link;
-	//first get the symlink, which is located at /proc/self/fd/ACTUAL_FD where ACTUAL_FD is int fd
-	sprintf(fdPath, format, fd);
-	printf("path length: %d ", strlen(fdPath));
-	printf("path; %s\n", fdPath);
-
-	//if failure, return null
-	if (lstat(fdPath, &sb) == -1) {
+	ino_t inodeNum;
+	if (fstat(fd, &sb) == -1) {
 		char errorNo[10];
 		sprintf(errorNo, "%d", errno);
 		perror(errorNo);
 		return NULL;
 	}
-	//we need lstat to determine the length of the name of the file
-	bufSize = sb.st_size + 1;
-	printf("buffersize: %d\n", bufSize);
-	if (sb.st_size == 0)
-		bufSize = PATH_MAX;
-
-	link = malloc(bufSize);
-	//if malloc error, return null
-	if (link == NULL) {
-		return NULL;
-	}
-	result = readlink(fdPath, link, bufSize);
-	//if readlink fails, return null
-	if (result == -1) {
-		return NULL;
-	}
-	link[result] = '\0';
-	return link;
+	inodeNum = sb.st_ino;
+	printf("inode: %lu", inodeNum);
+	return NULL;
 }
 
 int main() {
