@@ -1,6 +1,6 @@
 CC=gcc
 
-CFLAGS=-Wall -Werror
+CFLAGS=-g -Wall -Werror
 
 OBJECTS = trackCF lengths testOpen
 

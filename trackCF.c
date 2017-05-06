@@ -1,5 +1,68 @@
 #include "trackCF.h"
 
+registers * registersHead = NULL;
+files * filesHead = NULL;
+
+//add to the registers list
+void addRegisterRecord(int h, long a, long b, long c, long d, long e, long f, long g) {
+	registers * element = malloc(sizeof(registers));
+	element->start = h;
+	element->orig_eax = a;
+	element->eax = b;
+	element->ebx = c;
+	element->ecx = d;
+	element->edx = e;
+	element->esi = f;
+	element->edi = g;
+	element->next = NULL;
+	if (registersHead == NULL)
+		registersHead = element;
+	else {
+		registers * temp = registersHead;
+		while (temp->next != NULL)
+			temp = temp->next;
+		temp->next = element;
+	}
+}
+
+//add to the files list
+void addFileRecord(int a, char * b, char * c) {
+	files * element = malloc(sizeof(files));
+	element->syscall = a;
+	element->name1 = b;
+	element->name2 = c;
+	element->next = NULL;
+	if (filesHead == NULL)
+		filesHead = element;
+	else {
+		files * temp = filesHead;
+		while (temp->next != NULL)
+			temp = temp->next;
+		temp->next = element;
+	}
+}
+
+//free all allocated memory
+void freeAll() {
+	registers * temp = registersHead;
+	while (temp != NULL) {
+		registers * temp2 = temp->next;
+		//free the struct
+		free(temp);
+		temp = temp2;
+	}
+	files * temp2 = filesHead;
+	while (temp2 != NULL) {
+		//free the allocated strings
+		free(temp2->name1);
+		free(temp2->name2);
+		files * temp3 = temp2->next;
+		//then free the struct
+		free(temp2);
+		temp2 = temp3;
+	}
+}
+
 //print contents of frequency table
 void printCalls(int * array, int max) {
 	int counter = 0;
@@ -20,9 +83,11 @@ int findNull(char * start, int length) {
 	return 0;
 }
 
+//this is needed because the data at address resides in the child process; the parent process cannot normally
+//access this data
 //given the start address and the pid of the child process, get the string at that address
 //the pointer returned by this must be freed 
-void * getFileName(pid_t child, long address) {
+void * getString(pid_t child, long address) {
 	int foundNull = 0;
 	int initSize = 32;
 	void * ret = malloc(initSize);
@@ -67,18 +132,16 @@ int append(char * s, int size, char c) {
 	return 0;
 }
 
+//this runs a bash script that will find the filename
 //given a file descriptor, gets the file name associated with it
 //the pointer to this must be freed
-void * getFileName2(unsigned int fd, pid_t child) {
-	//printf("child: %d\n", child);
-	//printf("fd: %d\n", fd);
+void * getFileName(unsigned int fd, pid_t child) {
 	//get the lengths of the integers to allocate the appropriate amount
 	int fdLength = getLength(fd);
 	int pidLength = getLength(child);
 	//now build the command
 	char * command = calloc(17 + fdLength + pidLength, 1);
 	sprintf(command, "./findFileName %u %u", child, fd);
-	//printf("cmd: %s\n", command);
 	
 	FILE * fp = popen(command, "r");
 	int size = 50;
@@ -125,53 +188,95 @@ int main() {
 	else {
 		struct user_regs_struct regs;
 		int status = 0;
+		//PTRACE_SYSCALL will force the child process to stop at the beginning and end of a syscall
+		//need to distinguish between the two
 		while(waitpid(child, &status, 0) && (!WIFEXITED(status))) {
 			ptrace(PTRACE_GETREGS, child, NULL, &regs);
-			printf("syscall %ld\n", regs.orig_eax);
+			printf("orig_eax: %ld eax:%ld ebx: %ld ecx: %ld edx: %ld esi: %ld edi: %ld\n", regs.orig_eax, regs.eax, regs.ebx, regs.ecx, regs.edx, regs.esi, regs.edi);
 			countCalls[regs.orig_eax]++;
 			//IDEA: This .c file will be the dry run. It will record all syscalls and file I/O
 			//and put this into a log file. The wet run could be a separate program that reads
 			//this log file.
-
-			//Example log:
-			//(SYSCALL #) (ORDER OF ARGUMENTS AS THEY APPEAR AT http://syscalls.kernelgrok.com/)
 			
-			//the open, create or unlink syscall
-			//for open and openat, should also get the flag (read,write,etc.)
-			if ((regs.orig_eax == 5) || (regs.orig_eax == 8) || (regs.orig_eax == 10)) {
-				void * fileName = getFileName(child, regs.ebx);
-				printf("file: %s\n", (char *) fileName);
-				free(fileName);
+			//log the syscall and the registers
+			//are we at the start or end of a syscall? ignore call 11 and 252
+			if ((regs.orig_eax == 11) || (regs.orig_eax == 252))
+				addRegisterRecord(2, regs.orig_eax, regs.eax, regs.ebx, regs.ecx, regs.edx, regs.esi, regs.edi);
+			//if eax is -38, then we are at start
+			else if (regs.eax == -38) {
+				addRegisterRecord(1, regs.orig_eax, regs.eax, regs.ebx, regs.ecx, regs.edx, regs.esi, regs.edi);
 			}
-			//the openat syscall
-			if (regs.orig_eax == 295) {
-				void * fileName = getFileName(child, regs.ecx);
-				printf("file: %s\n", (char *) fileName);
-				free(fileName);
+			else {
+				addRegisterRecord(0, regs.orig_eax, regs.eax, regs.ebx, regs.ecx, regs.edx, regs.esi, regs.edi);
 			}
-			//the read, write, or close syscall
-			if ((regs.orig_eax == 3) || (regs.orig_eax == 4) || (regs.orig_eax == 6)) {
-				void * fileName = getFileName2(regs.ebx, child);
-				printf("file: %s\n", (char *) fileName);
-				printf("descriptor:%ld\n", regs.ebx);
-				free(fileName);
+			
+			//next need to log potential files. each file related syscall has var's in diff registers. should only log
+			//before the syscall, not after
+			
+			char * oldFileName;
+			char * newFileName;
+			int fileIO = 0;
+			switch(regs.orig_eax) {
+				//the open, create or unlink syscall
+				case 5:
+				case 8:
+				case 10:
+					oldFileName = getString(child, regs.ebx);
+					newFileName = NULL;
+					fileIO = 1;					
+					break;
+				//the openat or unlinkat syscall
+				case 295:
+				case 301:
+					oldFileName = getString(child, regs.ecx);
+					newFileName = NULL;
+					fileIO = 1;
+					break;
+				//the read, readv, preadv, write, writev, pwritev, or close syscall
+				case 3:
+				case 4:
+				case 6:
+				case 145:
+				case 146:
+				case 333:
+				case 334:
+					oldFileName = getFileName(regs.ebx, child);
+					newFileName = NULL;
+					fileIO = 1;
+					break;
+				//the rename, link, or symlink syscall
+				case 9:
+				case 38:
+				case 83:
+					oldFileName = getString(child, regs.ebx);
+					newFileName = getString(child, regs.ecx);
+					fileIO = 1;
+					break;
+				//the renameat or linkat syscall
+				case 302:
+				case 303:
+					oldFileName = getString(child, regs.ecx);
+					newFileName = getString(child, regs.esi);
+					fileIO = 1;
+					break;
+				//the symlinkat syscall
+				case 304:
+					oldFileName = getString(child, regs.ebx);
+					newFileName = getString(child, regs.edx);
+					fileIO = 1;
+					break;
+				default:
+					break;
 			}
-			//the rename syscall
-			if (regs.orig_eax == 38) {
+			if ((regs.eax == -38) && (fileIO))
+				addFileRecord(regs.orig_eax, oldFileName, newFileName);
+			
 
-			}
-			//the renameat syscall
-			if (regs.orig_eax == 302) {
-
-			}
-			//the unlinkat syscall
-			if (regs.orig_eax == 301) {
-
-			}
 			ptrace(PTRACE_SYSCALL, child, 0, 0);
 		}
 
 	}	
 	printCalls(countCalls, 338);
+	freeAll();
 	return 0;
 }
