@@ -3,6 +3,28 @@
 registers * registersHead = NULL;
 files * filesHead = NULL;
 
+//print all the records to a file
+//format: start, syscall, orig_eax, eax, ebx, ecx, edx, esi, edi
+//the function that calls this must make sure the FILE * passed must be open before calling and closed afterwards
+void printRegisterRecords(FILE * output) {
+	registers * temp = registersHead;
+	while (temp != NULL) {
+		fprintf(output, "%d %ld %ld %ld %ld %ld %ld %ld\n", temp->start, temp->orig_eax, temp->eax, temp->ebx, temp->ecx, temp->edx, temp->esi, temp->edi);
+		temp = temp->next;
+	}
+}
+
+//prints all file touches to a file
+//format: syscall, name1, name2
+//the function that calls this must make sure the FILE * passed must be open before calling and closed afterwards
+void printFileRecords(FILE * output) {
+	files * temp = filesHead;
+	while (temp != NULL) {
+		fprintf(output, "%ld %s %s\n", temp->syscall, temp->name1, temp->name2);
+		temp = temp->next;
+	}
+}
+
 //add to the registers list
 void addRegisterRecord(int h, long a, long b, long c, long d, long e, long f, long g) {
 	registers * element = malloc(sizeof(registers));
@@ -26,7 +48,7 @@ void addRegisterRecord(int h, long a, long b, long c, long d, long e, long f, lo
 }
 
 //add to the files list
-void addFileRecord(int a, char * b, char * c) {
+void addFileRecord(long a, char * b, char * c) {
 	files * element = malloc(sizeof(files));
 	element->syscall = a;
 	element->name1 = b;
@@ -210,8 +232,7 @@ int main() {
 				addRegisterRecord(0, regs.orig_eax, regs.eax, regs.ebx, regs.ecx, regs.edx, regs.esi, regs.edi);
 			}
 			
-			//next need to log potential files. each file related syscall has var's in diff registers. should only log
-			//before the syscall, not after
+			//next need to log potential files. each file related syscall has var's in diff registers. 
 			
 			char * oldFileName;
 			char * newFileName;
@@ -268,6 +289,7 @@ int main() {
 				default:
 					break;
 			}
+			//should only log before the syscall, not after
 			if ((regs.eax == -38) && (fileIO))
 				addFileRecord(regs.orig_eax, oldFileName, newFileName);
 			
@@ -275,7 +297,16 @@ int main() {
 			ptrace(PTRACE_SYSCALL, child, 0, 0);
 		}
 
-	}	
+	}
+	//finally write all data to files
+	FILE * registersFile = fopen("registerRecords", "w+");
+	FILE * fileHistory = fopen("fileHistory", "w+");
+
+	printRegisterRecords(registersFile);
+	printFileRecords(fileHistory);
+	fclose(registersFile);
+	fclose(fileHistory);
+
 	printCalls(countCalls, 338);
 	freeAll();
 	return 0;
