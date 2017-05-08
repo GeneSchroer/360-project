@@ -14,9 +14,10 @@
 
 typedef struct{
 	char** directories;
-	size_t numDirectories;
-	char** sysCalls;
-	size_t numSysCalls;
-}profile;
+	int numDirectories;
+	int* sysCalls;
+	int numSysCalls;
+	int numCalled;
+}Profile;
 
 #endif
