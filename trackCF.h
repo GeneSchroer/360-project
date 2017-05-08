@@ -13,7 +13,7 @@
 
 struct files {
 	struct files * next;
-	int syscall;
+	long syscall;
 	char * name1;
 	char * name2;
 };
