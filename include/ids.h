@@ -12,4 +12,11 @@
 #include <sys/wait.h>
 #include <sys/reg.h>
 
+typedef struct{
+	char** directories;
+	size_t numDirectories;
+	char** sysCalls;
+	size_t numSysCalls;
+}profile;
+
 #endif
