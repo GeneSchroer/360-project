@@ -1,6 +1,11 @@
 #include "ids.h"
 
 void run_training_mode(char *pathname, char** new_argv){
+  // Attempt to load in previously made profile into a struct
+  char* programName; // This will be the programName to look for when searching for a profile
+  struct programProfile = loadProfile(programName);
+
+
   pid_t child;
   long orig_eax;
   child = fork();
