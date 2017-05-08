@@ -10,7 +10,7 @@ void* loadProfile(char* programName){
 	char* profileName = strcat("../profiles/", programName);
 	profileName = strcat(profileName, "_profile.txt");
 
-	FILE profile = fopen(profileName);
+	FILE profile = fopen(profileName, "r");
 
 	// If there is no profile made for the current program then return NULL
 	if(profile == NULL){
@@ -30,12 +30,27 @@ void* loadProfile(char* programName){
 	// Read a line from the profile file
 	fgets(buf,256,profile);
 
+	// Get the number of times the program was called
+	int numCalled = atoi(buf);
+	newPorfile.numCalled = numCalled;
+
+	fgets(buf,256,profile);
+
 	// Read in all directories from profile file
 	while(strstr(buf, "SYSCALLS") == NULL){
+		// Allocate memory for the directory string
 		char* dirBuf = malloc(strlen(buf));
+
+		// Copy that string to memory
 		strcpy(buf,dirbuf);
-		newProfile.directories[numDirectories] = &dirBuf;
-		newProfile.numDirectories++;
+
+		// Resize the directories array to store that new string
+		newProfile.directories = (char*)realloc(newProfile.directories, newProfile.numDirectories + 1 * sizeof(char*));
+		
+		// Add in the new directory
+		newProfile.directories[newProfile.numDirectories++] = &dirBuf;
+		
+		// Fetch the next line of the file
 		fgets(buf,256,profile);
 	}
 
@@ -43,8 +58,40 @@ void* loadProfile(char* programName){
 	fgets(buf,256);
 
 	while(strstr(buf, "REGISTERS") == NULL){
+		// Convert the buf to an int
+		int syscall = atoi(buf);
 
+		// Resize the array of ints to add the new syscall
+		newProfile.sysCalls = (int*)realloc(newProfile.sysCalls, newProfile.numSysCalls + 1 * sizeof(int));
+
+		// Insert the new syscall to the array
+		newProfile.sysCalls[newProfile.numSysCalls++] = syscall;
+
+		// Fetch the next line`
+		fgets(buf,256,profile);
 	}
 
 	return &newProfile;
+}
+
+/*
+*	Given a profile struct, writes all data to a file for later use by training runs or a defense run
+*/
+void writeProfile(Profile* profile, char* programName){
+	// Either open up the existing profile or create a new file given the specified program name
+	char* profileName = strcat("../profiles/", programName);
+	profileName = strcat(profileName, "_profile.txt");
+	FILE profileFile = fopen(profileName, "w");
+
+
+	// Write the number of times the program was called to the file on the first line
+	fprintf(profileFile, "%d\n", profile->numCalled);
+
+	// Loop through all of the directories
+	for(int i = 0; i < profile->numDirectories; i++){
+		fprintf(profileFile, "%s\n", profile->directories[i]);
+	}
+	for(int i = 0; i < profile->numSysCalls; i++){
+		fprintf(profileFile, "%d\n", profile->sysCalls[i]);
+	}
 }
