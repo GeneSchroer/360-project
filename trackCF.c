@@ -259,14 +259,18 @@ int main() {
 			
 			//log the syscall and the registers
 			//are we at the start or end of a syscall? ignore call 11 and 252
-			if ((regs.orig_eax == 11) || (regs.orig_eax == 252))
-				addRegisterRecord(2, regs.orig_eax, regs.eax, regs.ebx, regs.ecx, regs.edx, regs.esi, regs.edi);
+			if ((regs.orig_eax == 11) || (regs.orig_eax == 252)) {
+				if (addRegisterRecord(2, regs.orig_eax, regs.eax, regs.ebx, regs.ecx, regs.edx, regs.esi, regs.edi))
+					exitGracefully(child);
+			}
 			//if eax is -38, then we are at start
 			else if (regs.eax == -38) {
-				addRegisterRecord(1, regs.orig_eax, regs.eax, regs.ebx, regs.ecx, regs.edx, regs.esi, regs.edi);
+				if (addRegisterRecord(1, regs.orig_eax, regs.eax, regs.ebx, regs.ecx, regs.edx, regs.esi, regs.edi))
+					exitGracefully(child);
 			}
 			else {
-				addRegisterRecord(0, regs.orig_eax, regs.eax, regs.ebx, regs.ecx, regs.edx, regs.esi, regs.edi);
+				if (addRegisterRecord(0, regs.orig_eax, regs.eax, regs.ebx, regs.ecx, regs.edx, regs.esi, regs.edi))
+					exitGracefully(child);
 			}
 			
 			//next need to log potential files. each file related syscall has var's in diff registers. 
