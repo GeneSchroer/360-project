@@ -25,9 +25,11 @@ void printFileRecords(FILE * output) {
 	}
 }
 
-//add to the registers list
-void addRegisterRecord(int h, long a, long b, long c, long d, long e, long f, long g) {
-	registers * element = malloc(sizeof(registers));
+//add to the registers list. 1 is failure, 0 is success
+int addRegisterRecord(int h, long a, long b, long c, long d, long e, long f, long g) {
+	registers * element;
+	if ((element = malloc(sizeof(registers))) == NULL)
+		return 1;
 	element->start = h;
 	element->orig_eax = a;
 	element->eax = b;
@@ -45,11 +47,14 @@ void addRegisterRecord(int h, long a, long b, long c, long d, long e, long f, lo
 			temp = temp->next;
 		temp->next = element;
 	}
+	return 0;
 }
 
-//add to the files list
-void addFileRecord(long a, char * b, char * c) {
-	files * element = malloc(sizeof(files));
+//add to the files list. 1 is failures, 0 is success
+int addFileRecord(long a, char * b, char * c) {
+	files * element;
+	if ((element = malloc(sizeof(files))) == NULL)
+		return 1;
 	element->syscall = a;
 	element->name1 = b;
 	element->name2 = c;
@@ -62,6 +67,7 @@ void addFileRecord(long a, char * b, char * c) {
 			temp = temp->next;
 		temp->next = element;
 	}
+	return 0;
 }
 
 //free all allocated memory
@@ -112,7 +118,9 @@ int findNull(char * start, int length) {
 void * getString(pid_t child, long address) {
 	int foundNull = 0;
 	int initSize = 32;
-	void * ret = malloc(initSize);
+	void * ret;
+	if ((ret = malloc(initSize)) == NULL)
+		return NULL;
 	long counter = 0;
 	int checkedSize = 0;
 	while(!foundNull) {
@@ -131,7 +139,14 @@ void * getString(pid_t child, long address) {
 		//is the string buffer maxed out?
 		if (checkedSize == initSize) {
 			initSize *= 2;
-			ret = realloc(ret, initSize);
+			void * temp;
+			if ((temp = realloc(ret, initSize)) == NULL) {
+				free(ret);
+				return NULL;
+			}
+			else {
+				ret = temp;
+			}
 		}
 	}
 	return ret;
@@ -162,12 +177,18 @@ void * getFileName(unsigned int fd, pid_t child) {
 	int fdLength = getLength(fd);
 	int pidLength = getLength(child);
 	//now build the command
-	char * command = calloc(17 + fdLength + pidLength, 1);
+	char * command;
+	if ((command = calloc(17 + fdLength + pidLength, 1)) == NULL)
+		return NULL;
 	sprintf(command, "./findFileName %u %u", child, fd);
 	
 	FILE * fp = popen(command, "r");
 	int size = 50;
-	char * result = calloc(size, 1);
+	char * result;
+	if ((result = calloc(size, 1)) == NULL) {
+		free(command);
+		return NULL;
+	}
 	char c;
 	do {
 		c = fgetc(fp);
@@ -176,7 +197,15 @@ void * getFileName(unsigned int fd, pid_t child) {
 		else {
 			if (strlen(result) + 1 >= size) {
 				size *= 1.2;
-				result = realloc(result, size);
+				char * temp;
+				if ((temp = realloc(result, size)) == NULL) {
+					free(result);
+					free(command);
+					return NULL;
+				}
+				else {
+					result = temp;
+				}
 			}
 			else {
 				append(result, size, c);
@@ -186,6 +215,14 @@ void * getFileName(unsigned int fd, pid_t child) {
 	
 	free(command);
 	return result;
+}
+
+//if malloc fails, should exit. this function frees all previously allocated memory, kills children, and exits
+void exitGracefully(int child) {
+	freeAll();
+	kill(child, SIGKILL);
+	printf("Ran out of memory!\n");
+	exit(0);
 }
 
 int main() {
@@ -242,14 +279,18 @@ int main() {
 				case 5:
 				case 8:
 				case 10:
-					oldFileName = getString(child, regs.ebx);
+					if ((oldFileName = getString(child, regs.ebx)) == NULL) {
+						exitGracefully(child);
+					}
 					newFileName = NULL;
 					fileIO = 1;					
 					break;
 				//the openat or unlinkat syscall
 				case 295:
 				case 301:
-					oldFileName = getString(child, regs.ecx);
+					if ((oldFileName = getString(child, regs.ecx)) == NULL) {
+						exitGracefully(child);
+					}
 					newFileName = NULL;
 					fileIO = 1;
 					break;
@@ -261,7 +302,9 @@ int main() {
 				case 146:
 				case 333:
 				case 334:
-					oldFileName = getFileName(regs.ebx, child);
+					if ((oldFileName = getFileName(regs.ebx, child)) == NULL) {
+						exitGracefully(child);
+					}
 					newFileName = NULL;
 					fileIO = 1;
 					break;
@@ -269,21 +312,33 @@ int main() {
 				case 9:
 				case 38:
 				case 83:
-					oldFileName = getString(child, regs.ebx);
-					newFileName = getString(child, regs.ecx);
+					if ((oldFileName = getString(child, regs.ebx)) == NULL) {
+						exitGracefully(child);
+					}
+					if ((newFileName = getString(child, regs.ecx)) == NULL) {
+						exitGracefully(child);
+					}
 					fileIO = 1;
 					break;
 				//the renameat or linkat syscall
 				case 302:
 				case 303:
-					oldFileName = getString(child, regs.ecx);
-					newFileName = getString(child, regs.esi);
+					if ((oldFileName = getString(child, regs.ecx)) == NULL) {
+						exitGracefully(child);
+					}
+					if ((newFileName = getString(child, regs.esi)) == NULL) {
+						exitGracefully(child);
+					}
 					fileIO = 1;
 					break;
 				//the symlinkat syscall
 				case 304:
-					oldFileName = getString(child, regs.ebx);
-					newFileName = getString(child, regs.edx);
+					if ((oldFileName = getString(child, regs.ebx)) == NULL) {
+						exitGracefully(child);
+					}
+					if ((newFileName = getString(child, regs.edx)) == NULL) {
+						exitGracefully(child);
+					}
 					fileIO = 1;
 					break;
 				default:
