@@ -5,10 +5,12 @@
 */
 int* getNgram(char* buf){
 	int n = 0;
-	int* ngram = malloc(3*sizeof(int));
-	ngram[0]=-1;
-	ngram[1]=-1;
-	ngram[2]=-1;
+	int* ngram = malloc(NGRAM_SIZE*sizeof(int));
+	
+	for(int i = 0; i < NGRAM_SIZE; i++){
+		ngram[i]=-1;
+	}
+
 	char* pch = strtok (buf," ");
 	while (pch != NULL)
 	{
@@ -24,7 +26,7 @@ int* getNgram(char* buf){
 */
 void insertNgram(Profile prof, ngram n){
 	// Determine the bucket number by taking the first element in the ngram and moduloing it by 4
-	int bucketNum = n.sysCalls[0] % 4;
+	int bucketNum = n.sysCalls[0] % NUM_NGRAM_BUCKETS;
 
 	// Hold the current bucket to add to
 	ngramBucket currentBucket = prof.ngramBuckets[bucketNum];
@@ -59,7 +61,7 @@ void* loadProfile(char* programName){
 	newProfile.numDirectories = 0;
 	newProfile.directories = (char*)malloc(sizeof(char*));
 	newProfile.ngramBuckets = (ngramBucket**)malloc(4*sizeof(ngramBucket));
-	newProfile.nunNgramBuckets = 4;
+	newProfile.nunNgramBuckets = NUM_NGRAM_BUCKETS;
 
 	// Initialize all of the ngramBuckets to a size of zero
 	for(int i = 0; i < newProfile.numNgramBuckets; i++){

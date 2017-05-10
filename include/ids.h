@@ -13,6 +13,7 @@
 #include <sys/reg.h>
 
 #define NGRAM_SIZE 3
+#define NUM_NGRAM_BUCKETS 4
 
 // Holds all information for a program's IDS profile
 typedef struct{
