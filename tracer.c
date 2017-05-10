@@ -3,14 +3,16 @@
 registers * registersHead = NULL;
 files * filesHead = NULL;
 long * syscalls = NULL;
+int syscallsLength = 0;
 
 //gets the length of the registers linked list
 int syscallLength() {
 	registers * temp = registersHead;
 	int counter = 0;
 	while (temp != NULL) {
+		if ((temp->start == 1) || (temp->start == 2))
+			counter++;
 		temp = temp->next;
-		counter++;
 	}
 	return counter;
 }
@@ -19,12 +21,24 @@ int syscallLength() {
 //returns the length of the array. this must be freed
 int printCallNum() {
 	int length = syscallLength();
-	long * temp = malloc(length * sizeof(long));
+	long * temp;
+	if ((temp = malloc(length * sizeof(long))) == NULL)
+		return 0;
 	registers * temp2 = registersHead;
 	int counter = 0;
 	while (temp2 != NULL) {
-		temp[counter] = temp2->orig_eax;
+		if ((temp2->start == 1) || (temp2->start == 2)) {
+			temp[counter] = temp2->orig_eax;
+			counter++;
+		}
 		temp2 = temp2->next;
+	}
+	if (syscalls == NULL) {
+		syscalls = temp;
+	}
+	else {
+		free(syscalls);
+		syscalls = temp;
 	}
 	return length;
 }
@@ -115,6 +129,7 @@ void freeAll() {
 		free(temp2);
 		temp2 = temp3;
 	}
+	free(syscalls);
 }
 
 //print contents of frequency table
@@ -251,7 +266,7 @@ void exitGracefully(int child) {
 	exit(0);
 }
 
-int main() {
+void getSyscalls() {
 	pid_t child;	
 	//keep track of all syscalls
 	int countCalls[338] = {0};
@@ -276,8 +291,7 @@ int main() {
 		//PTRACE_SYSCALL will force the child process to stop at the beginning and end of a syscall
 		//need to distinguish between the two
 		while(waitpid(child, &status, 0) && (!WIFEXITED(status))) {
-			ptrace(PTRACE_GETREGS, child, NULL, &regs);
-			printf("orig_eax: %ld eax:%ld ebx: %ld ecx: %ld edx: %ld esi: %ld edi: %ld\n", regs.orig_eax, regs.eax, regs.ebx, regs.ecx, regs.edx, regs.esi, regs.edi);
+			ptrace(PTRACE_GETREGS, child, NULL, &regs);			
 			countCalls[regs.orig_eax]++;
 			//IDEA: This .c file will be the dry run. It will record all syscalls and file I/O
 			//and put this into a log file. The wet run could be a separate program that reads
@@ -392,7 +406,6 @@ int main() {
 	fclose(registersFile);
 	fclose(fileHistory);
 
-	printCalls(countCalls, 338);
-	freeAll();
-	return 0;
+	//printCalls(countCalls, 338);
+	syscallsLength = printCallNum();
 }

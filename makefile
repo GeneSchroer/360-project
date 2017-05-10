@@ -2,10 +2,15 @@ CC=gcc
 
 CFLAGS=-g -Wall -Werror
 
-OBJECTS = trackCF lengths testOpen
+BINARIES = trackCF lengths testOpen test
+
+OBJECTS = tracer.o
 
 
-all: $(OBJECTS)
+all: $(BINARIES)
+
+test: $(OBJECTS)
+	$(CC) $(CFLAGS) $(OBJECTS) test.c -o linkTest 
 
 trackCF: 
 	$(CC) $(CFLAGS) -o trackCF trackCF.c
@@ -20,4 +25,4 @@ ids:
 	$(CC) include/ids.h src/ids.c src/training.c src/defense.c -o IDS -Iinclude
 
 clean:
-	rm $(OBJECTS) 
+	rm -f $(OBJECTS) $(BINARIES) 
