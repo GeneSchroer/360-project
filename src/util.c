@@ -95,3 +95,15 @@ void writeProfile(Profile* profile, char* programName){
 		fprintf(profileFile, "%d\n", profile->sysCalls[i]);
 	}
 }
+
+
+
+
+int isValidNgram(ngram current, ngram trav){
+  int i;
+  for(i = 0; i< NGRAM_SIZE; ++i)
+    if (current[i] != trav[i])
+      return 0;
+  
+  return 1;
+}
