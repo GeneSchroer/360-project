@@ -11,13 +11,14 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/reg.h>
-
+#include <sys/syscall.h>
 #define NGRAM_SIZE 3
+#define HASH 4
 #define NUM_NGRAM_BUCKETS 4
 
 // Holds all information for a program's IDS profile
 typedef struct{
-	// A lis of all directories and files accessible by this program
+	// A list of all directories and files accessible by this program
 	char** directories;
 	int numDirectories;
 	

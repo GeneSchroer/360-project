@@ -171,3 +171,26 @@ void freeProfile(Profile prof){
 	// Free the list of ngram buckets
 	free(profile.ngramBuckets);
 }
+
+/* Compares two ngrams to determine if they are the same */
+/* returns 0 (false) if they are not, and 1 (true) otherwise */
+int compareNgrams(ngram current, ngram trav){
+  int i;
+  for(i = 0; i< NGRAM_SIZE; ++i)
+    if (current.sysCalls[i] != trav.sysCalls[i])
+      return 0;
+  
+  return 1;
+}
+
+/* iterates through an ingram bucket to determine */
+/* if the bucket contains an ngram */
+/* returns 0 (false) if it does not and 1 (true) if it does */
+int isValidNgram(ngram current, ngramBucket bucket){
+  int i;
+  for(i=0; i < bucket.numNgrams; ++i)
+    if( compareNgrams(current, bucket.ngrams[i]) == 1)
+      return 1;
+  return 0;
+}
+
