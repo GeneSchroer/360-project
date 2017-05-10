@@ -1,5 +1,5 @@
 unless ($ARGV[0]) {
-	die "No input supplied\n";
+	exit;
 }
 $ARGV[0] =~ /-> (\/.*$)/;
 print "$1\n";
