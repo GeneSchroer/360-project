@@ -12,6 +12,8 @@
 #include <sys/wait.h>
 #include <sys/reg.h>
 
+#define NGRAM_SIZE 3
+
 typedef struct{
 	char** directories;
 	int numDirectories;
@@ -19,5 +21,11 @@ typedef struct{
 	int numSysCalls;
 	int numCalled;
 }Profile;
+
+typedef struct{
+
+  int* sysCalls;
+  
+}ngram;
 
 #endif
