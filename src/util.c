@@ -1,6 +1,42 @@
 #include "ids.h"
 
 /*
+* Takes a string buffer as input and returns the numerical values of the ngram
+*/
+int* getNgram(char* buf){
+	int n = 0;
+	int* ngram = malloc(3*sizeof(int));
+	ngram[0]=-1;
+	ngram[1]=-1;
+	ngram[2]=-1;
+	char* pch = strtok (buf," ");
+	while (pch != NULL)
+	{
+    	ngram[n++] = atoi(pch);
+    	pch = strtok (NULL, " ");
+	}
+
+	return ngram;
+}
+
+/*
+* Insert an n gram into the bucket specified by the hash of the first element in the ngram
+*/
+void insertNgram(Profile prof, ngram n){
+	// Determine the bucket number by taking the first element in the ngram and moduloing it by 4
+	int bucketNum = n.sysCalls[0] % 4;
+
+	// Hold the current bucket to add to
+	ngramBucket currentBucket = prof.ngramBuckets[bucketNum];
+
+	// Resize the current bucket to include room for the new ngram
+	realloc(currentBucket, sizeof(currentBucket.numNgrams + 1 * sizeof(ngram)));
+
+	// Add the new ngram to the bucket
+	currentBucket.ngrams[currentBucket.numNgrams++] = n;
+}
+
+/*
 * Attempts to load in a profile of a given program
 * If there is no profile for the given program, then NULL is returned. Otherwise, a profile struct is
 * created and returned to the caller
@@ -19,10 +55,16 @@ void* loadProfile(char* programName){
 
 	// Otherwise create a new struct and fill it with all information from the file
 	Profile newProfile;
+	newProfile.numCalled = 0;
 	newProfile.numDirectories = 0;
 	newProfile.directories = (char*)malloc(sizeof(char*));
-	newProfile.sysCalls = (int*)malloc(sizeof(int*));
-	newProfile.numSysCalls = 0;
+	newProfile.ngramBuckets = (ngramBucket**)malloc(4*sizeof(ngramBucket));
+	newProfile.nunNgramBuckets = 4;
+
+	// Initialize all of the ngramBuckets to a size of zero
+	for(int i = 0; i < newProfile.numNgramBuckets; i++){
+		newProfile.ngramBuckets[i].numNgrams = 0;
+	}
 
 	// The buf for reading from the profile file
 	char* buf[256];
@@ -34,8 +76,17 @@ void* loadProfile(char* programName){
 	int numCalled = atoi(buf);
 	newPorfile.numCalled = numCalled;
 
-	fgets(buf,256,profile);
+	// Get the ngram at the current line and add it to the profile
+	while(fgets(buf,256,profile)){
+		int* currentNgram = getNgram(buf);
 
+		insertNgram(newProfile, currentNgram);
+	}
+
+
+
+	return &newProfile;
+	/*
 	// Read in all directories from profile file
 	while(strstr(buf, "SYSCALLS") == NULL){
 		// Allocate memory for the directory string
@@ -70,8 +121,8 @@ void* loadProfile(char* programName){
 		// Fetch the next line`
 		fgets(buf,256,profile);
 	}
-
 	return &newProfile;
+	*/
 }
 
 /*
@@ -87,11 +138,18 @@ void writeProfile(Profile* profile, char* programName){
 	// Write the number of times the program was called to the file on the first line
 	fprintf(profileFile, "%d\n", profile->numCalled);
 
-	// Loop through all of the directories
+	/*
+	// Loop through all of the directories and write each to a new line in the file
 	for(int i = 0; i < profile->numDirectories; i++){
 		fprintf(profileFile, "%s\n", profile->directories[i]);
 	}
-	for(int i = 0; i < profile->numSysCalls; i++){
-		fprintf(profileFile, "%d\n", profile->sysCalls[i]);
+	*/
+
+	// Loop through all of the ngrams and write each sequence on its own line in the file
+	for(int i = 0; i < profile->numNgramBuckets->size; i++){
+		for(int j = 0; j < profile->ngramBuckets[i]->size; j++){
+			int* currentNgram = profile->ngramBuckets[i]->ngrams[j]->sysCalls;
+			fprintf(profileFile, "%d %d %d\n", currentNgram[0], currentNgram[1], currentNgram[2]);
+		}
 	}
 }
