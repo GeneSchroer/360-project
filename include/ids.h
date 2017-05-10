@@ -26,14 +26,14 @@ typedef struct{
 	
 	// List of 4 ngram buckets in which ngrams will be placed. The bucket number is determined by taking ngram->sysCalls[0] % 4
 	// This simple hash will reduce search times for an existing ngram sequence in both training mode and defense mode
-	ngramBucket** ngramBuckets;
+	ngramBucket* ngramBuckets;
 	int numNgramBuckets;
 }Profile;
 
 // Holds a list of ngrams. Bucket number is determined using the algorithm mentioned above
 typedef struct{
 	int numNgrams;
-	ngram** ngrams;
+	ngram* ngrams;
 }ngramBucket;
 
 // A list of at most three system calls recorded from the program

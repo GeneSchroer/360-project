@@ -58,9 +58,9 @@ void* loadProfile(char* programName){
 	// Otherwise create a new struct and fill it with all information from the file
 	Profile newProfile;
 	newProfile.numCalled = 0;
-	newProfile.numDirectories = 0;
-	newProfile.directories = (char*)malloc(sizeof(char*));
-	newProfile.ngramBuckets = (ngramBucket**)malloc(4*sizeof(ngramBucket));
+	//newProfile.numDirectories = 0;
+	//newProfile.directories = (char*)malloc(sizeof(char*));
+	newProfile.ngramBuckets = (ngramBucket**)malloc(NUM_NGRAM_BUCKETS*sizeof(ngramBucket));
 	newProfile.nunNgramBuckets = NUM_NGRAM_BUCKETS;
 
 	// Initialize all of the ngramBuckets to a size of zero
@@ -154,4 +154,20 @@ void writeProfile(Profile* profile, char* programName){
 			fprintf(profileFile, "%d %d %d\n", currentNgram[0], currentNgram[1], currentNgram[2]);
 		}
 	}
+}
+
+/*
+* Frees all memory associated with a profile except directories
+*/
+void freeProfile(Profile prof){
+	// Free all ngrams and buckets
+	for(int i = 0; i < profile.numNgramBuckets.size; i++){
+		for(int j = 0; j < profile.ngramBuckets[i].numNgrams; j++){
+			free(profile.ngramBuckets[i].ngrams[j].sysCalls);
+		}
+		free(profile.ngramBuckets[i]);
+	}
+
+	// Free the list of ngram buckets
+	free(profile.ngramBuckets);
 }
