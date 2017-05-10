@@ -11,7 +11,6 @@
 #include <limits.h>
 #include <errno.h>
 
-
 struct files {
 	struct files * next;
 	long syscall;
@@ -68,5 +67,5 @@ void * getFileName(unsigned int fd, pid_t child);
 
 void exitGracefully();
 
-void getSyscalls();
+void getSyscalls(const char *path, char *const argv[]);
 

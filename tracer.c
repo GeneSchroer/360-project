@@ -266,7 +266,7 @@ void exitGracefully(int child) {
 	exit(0);
 }
 
-void getSyscalls() {
+void getSyscalls(const char *path, char *const argv[]) {
 	pid_t child;	
 	//keep track of all syscalls
 	int countCalls[338] = {0};
@@ -283,7 +283,9 @@ void getSyscalls() {
 //		execl("/usr/bin/head", "head", "sampletext", NULL);
 //		execl("/bin/cat", "cat", "sampletext", NULL);
 //		execl("/bin/chmod", "chmod", "+r", "note", NULL);
-		execl("/home/sekar/Desktop/360/testOpen", "./testOpen", NULL);
+//		execl("/home/sekar/Desktop/360/testOpen", "./testOpen", (char *) NULL);
+
+		execv(path, argv);
 	}
 	else {
 		struct user_regs_struct regs;
