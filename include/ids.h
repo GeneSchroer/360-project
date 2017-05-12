@@ -12,9 +12,21 @@
 #include <sys/wait.h>
 #include <sys/reg.h>
 #include <sys/syscall.h>
+#include <libgen.h>
 #define NGRAM_SIZE 3
 #define HASH 4
 #define NUM_NGRAM_BUCKETS 4
+
+// A list of at most three system calls recorded from the program
+typedef struct{
+  int* sysCalls;
+}ngram;
+
+// Holds a list of ngrams. Bucket number is determined using the algorithm mentioned above
+typedef struct{
+	int numNgrams;
+	ngram* ngrams;
+}ngramBucket;
 
 // Holds all information for a program's IDS profile
 typedef struct{
@@ -31,15 +43,28 @@ typedef struct{
 	int numNgramBuckets;
 }Profile;
 
-// Holds a list of ngrams. Bucket number is determined using the algorithm mentioned above
-typedef struct{
-	int numNgrams;
-	ngram* ngrams;
-}ngramBucket;
+void run_training_mode(char *pathname, char** new_argv);
 
-// A list of at most three system calls recorded from the program
-typedef struct{
-  int* sysCalls;
-}ngram;
+void printNgrams(ngram* ngrams);
+
+void* generateNgrams(const char *path, char *const argv[]);
+
+void* getNgram(char* buf);
+
+void insertNgram(Profile prof, ngram n);
+
+void* loadProfile(char* programName);
+
+void writeProfile(Profile* profile, char* programName);
+
+void freeProfile(Profile prof);
+
+int compareNgrams(ngram current, ngram trav);
+
+int isValidNgram(ngram current, ngramBucket bucket);
+
+char* getProgramName(char* path);
+
+
 
 #endif

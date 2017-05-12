@@ -1,29 +1,48 @@
-#include "ids.h"
-#include "tracer.h"
-
-extern long * syscalls;
-extern int syscallsLength;
-
-// Generates 
-void generateNgrams(){
-
-}
+#include "../include/ids.h"
 
 void run_training_mode(char *pathname, char** new_argv){
   // Attempt to load in previously made profile into a struct
-  char* programName; // This will be the programName to look for when searching for a profile
-  Profile programProfile = *loadProfile(programName);
+  char* programName = getProgramName(pathname); // This will be the programName to look for when searching for a profile
 
-  // Get syscalls from the target program
-  getSyscalls();
+  Profile *programProfile = (Profile*)loadProfile(programName);
 
   // Using the syscalls from the program, generate ngrams 
-  generateNgrams();
+  ngram* ngrams = generateNgrams(pathname, new_argv);
+
+  printNgrams(ngrams);
 
   writeProfile(programProfile, programName);
 
-  freeProfile(programProfile);
+  // TODO fix this
+  //freeProfile(*programProfile);
+
   return;
+}
+
+void printNgrams(ngram* ngrams){
+	int i = 0;
+	ngram pointer;
+
+
+
+	while(1){
+		pointer = ngrams[i];
+
+		if(pointer.sysCalls == NULL){
+			return;
+		}
+
+		printf("%d %d %d\n", pointer.sysCalls[0], pointer.sysCalls[1], pointer.sysCalls[2]);
+		i++;
+	}
+}
+
+int main(){
+	char * args[] = {"./testOpen", NULL};
+
+	run_training_mode("/home/sekar/Desktop/360/testOpen", args);
+
+	return 1;
 }
 
 

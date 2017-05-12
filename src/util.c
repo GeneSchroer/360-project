@@ -1,24 +1,87 @@
-#include "ids.h"
+#include "../include/ids.h"
+#include "../tracer.h"
+
+extern long * syscalls;
+extern int syscallsLength;
+
+char* getProgramName(char* path){
+	char* programName = basename(path);
+	return programName;
+}
+
+/*
+* Gets syscalls from specifed file and generates all ngrams from it
+*/
+void* generateNgrams(const char *path, char *const argv[]){
+	// First get the syscalls for the target program
+	getSyscalls(path, argv);
+
+	// List of ngrams to be generated from the list of syscalls
+	ngram* ngrams;
+
+	// The pointer of the list of three or fewer integers coresponding to the syscalls in the current ngram
+	int* currentNgramPointer;
+
+	// Allocate the space for the list of ngrams
+	if(syscallsLength == 0){
+		return NULL;
+	}
+	else if(syscallsLength < 3){
+		// Allocate space for one ngram
+		ngrams = (ngram*)malloc(sizeof(ngram));
+
+		// Allocate space for one int array the size of the number of syscalls
+		currentNgramPointer = (int*)malloc(syscallsLength * sizeof(int));
+
+		// Fill up that array
+		for(int i = 0; i < syscallsLength; i++){
+			currentNgramPointer[i] = (int)syscalls[i];
+		}
+
+		// Insert it into the list of ngrams
+		ngrams[0].sysCalls = currentNgramPointer;
+
+		return ngrams;
+	}
+	else{
+		// Allocate enough space for a list of ngrams that is the size of the syscalls array minus 2
+		ngrams = (ngram*)malloc((syscallsLength-2) * sizeof(ngram));
+
+		for(int i = 0; i < syscallsLength - 2; i++){
+			currentNgramPointer = (int*)malloc(NGRAM_SIZE * sizeof(int));
+
+			currentNgramPointer[0] = syscalls[i];
+			currentNgramPointer[1] = syscalls[i+1];
+			currentNgramPointer[2] = syscalls[i+2];
+
+			ngrams[i].sysCalls = currentNgramPointer;
+		}
+		return ngrams;
+	}
+}
 
 /*
 * Takes a string buffer as input and returns the numerical values of the ngram
 */
-int* getNgram(char* buf){
+void* getNgram(char* buf){
 	int n = 0;
-	int* ngram = malloc(NGRAM_SIZE*sizeof(int));
+	ngram* currentNgram = (ngram*)malloc(sizeof(ngram));
+	int* sysCalls = malloc(NGRAM_SIZE * sizeof(int));
 	
 	for(int i = 0; i < NGRAM_SIZE; i++){
-		ngram[i]=-1;
+		sysCalls[i]=-1;
 	}
 
 	char* pch = strtok (buf," ");
 	while (pch != NULL)
 	{
-    	ngram[n++] = atoi(pch);
+    	sysCalls[n++] = atoi(pch);
     	pch = strtok (NULL, " ");
 	}
 
-	return ngram;
+	currentNgram->sysCalls = sysCalls;
+
+	return currentNgram;
 }
 
 /*
@@ -29,13 +92,13 @@ void insertNgram(Profile prof, ngram n){
 	int bucketNum = n.sysCalls[0] % NUM_NGRAM_BUCKETS;
 
 	// Hold the current bucket to add to
-	ngramBucket currentBucket = prof.ngramBuckets[bucketNum];
+	ngramBucket* currentBucket = &(prof.ngramBuckets[bucketNum]);
 
 	// Resize the current bucket to include room for the new ngram
-	realloc(currentBucket, sizeof(currentBucket.numNgrams + 1 * sizeof(ngram)));
+	currentBucket = (ngramBucket*)realloc(currentBucket, sizeof(currentBucket->numNgrams + 1 * sizeof(ngram)));
 
 	// Add the new ngram to the bucket
-	currentBucket.ngrams[currentBucket.numNgrams++] = n;
+	currentBucket->ngrams[currentBucket->numNgrams++] = n;
 }
 
 /*
@@ -45,49 +108,56 @@ void insertNgram(Profile prof, ngram n){
 */
 void* loadProfile(char* programName){
 	// Get the name of the profile file given the program name
-	char* profileName = strcat("../profiles/", programName);
-	profileName = strcat(profileName, "_profile.txt");
+	char* profileName = (char*)malloc(256); 
+	strcpy(profileName, "../profiles/"); 
+	strcat(profileName, programName);
+	strcat(profileName, "_profile.txt");
 
-	FILE profile = fopen(profileName, "r");
+	// Try to open the file containing the program's profile
+	FILE *profile = fopen(profileName, "r");
 
-	// If there is no profile made for the current program then return NULL
-	if(profile == NULL){
-		return NULL;
-	}
+	// Free the memory associated with the profile name
+	free(profileName);
 
-	// Otherwise create a new struct and fill it with all information from the file
-	Profile newProfile;
-	newProfile.numCalled = 0;
+	// Create a new Profile Struct and initialize it
+	Profile *newProfile = (Profile*)malloc(sizeof(Profile));
+	newProfile->numCalled = 0;
 	//newProfile.numDirectories = 0;
 	//newProfile.directories = (char*)malloc(sizeof(char*));
-	newProfile.ngramBuckets = (ngramBucket**)malloc(NUM_NGRAM_BUCKETS*sizeof(ngramBucket));
-	newProfile.nunNgramBuckets = NUM_NGRAM_BUCKETS;
+	newProfile->ngramBuckets = (ngramBucket*)malloc(NUM_NGRAM_BUCKETS*sizeof(ngramBucket));
+	newProfile->numNgramBuckets = NUM_NGRAM_BUCKETS;
 
 	// Initialize all of the ngramBuckets to a size of zero
-	for(int i = 0; i < newProfile.numNgramBuckets; i++){
-		newProfile.ngramBuckets[i].numNgrams = 0;
+	for(int i = 0; i < newProfile->numNgramBuckets; i++){
+		newProfile->ngramBuckets[i].numNgrams = 0;
+	}
+
+	// If there is no profile made for the current program then return the empty profile struct, otherwise fill it with the information from the file
+	if(profile == NULL){
+		return newProfile;
 	}
 
 	// The buf for reading from the profile file
-	char* buf[256];
+	char buf[256];
 
 	// Read a line from the profile file
 	fgets(buf,256,profile);
 
 	// Get the number of times the program was called
 	int numCalled = atoi(buf);
-	newPorfile.numCalled = numCalled;
+	newProfile->numCalled = numCalled;
 
 	// Get the ngram at the current line and add it to the profile
 	while(fgets(buf,256,profile)){
-		int* currentNgram = getNgram(buf);
+		ngram* currentNgram = (ngram*)getNgram(buf);
 
-		insertNgram(newProfile, currentNgram);
+		insertNgram(*newProfile, *currentNgram);
 	}
 
+	// Close the file
+	fclose(profile);
 
-
-	return &newProfile;
+	return newProfile;
 	/*
 	// Read in all directories from profile file
 	while(strstr(buf, "SYSCALLS") == NULL){
@@ -128,14 +198,16 @@ void* loadProfile(char* programName){
 }
 
 /*
-*	Given a profile struct, writes all data to a file for later use by training runs or a defense run
+* Writes a program's profile to memory
 */
 void writeProfile(Profile* profile, char* programName){
 	// Either open up the existing profile or create a new file given the specified program name
-	char* profileName = strcat("../profiles/", programName);
-	profileName = strcat(profileName, "_profile.txt");
-	FILE profileFile = fopen(profileName, "w");
+	char* profileName = (char*)malloc(256); 
+	strcpy(profileName, "profiles/"); 
+	strcat(profileName, programName);
+	strcat(profileName, "_profile.txt");
 
+	FILE *profileFile = fopen(profileName, "w");
 
 	// Write the number of times the program was called to the file on the first line
 	fprintf(profileFile, "%d\n", profile->numCalled);
@@ -146,30 +218,37 @@ void writeProfile(Profile* profile, char* programName){
 		fprintf(profileFile, "%s\n", profile->directories[i]);
 	}
 	*/
+	
 
 	// Loop through all of the ngrams and write each sequence on its own line in the file
-	for(int i = 0; i < profile->numNgramBuckets->size; i++){
-		for(int j = 0; j < profile->ngramBuckets[i]->size; j++){
-			int* currentNgram = profile->ngramBuckets[i]->ngrams[j]->sysCalls;
+	for(int i = 0; i < profile->numNgramBuckets; i++){
+		for(int j = 0; j < profile->ngramBuckets[i].numNgrams; j++){
+			int* currentNgram = profile->ngramBuckets[i].ngrams[j].sysCalls;
 			fprintf(profileFile, "%d %d %d\n", currentNgram[0], currentNgram[1], currentNgram[2]);
 		}
 	}
+
+	// Close the file
+	fclose(profileFile);
+
+	// Free the memory associated with profileName
+	free(profileName);
 }
 
 /*
-* Frees all memory associated with a profile except directories
+* Frees a profile's memory
 */
 void freeProfile(Profile prof){
 	// Free all ngrams and buckets
-	for(int i = 0; i < profile.numNgramBuckets.size; i++){
-		for(int j = 0; j < profile.ngramBuckets[i].numNgrams; j++){
-			free(profile.ngramBuckets[i].ngrams[j].sysCalls);
+	for(int i = 0; i < prof.numNgramBuckets; i++){
+		for(int j = 0; j < prof.ngramBuckets[i].numNgrams; j++){
+			free(prof.ngramBuckets[i].ngrams[j].sysCalls);
 		}
-		free(profile.ngramBuckets[i]);
+		free(&prof.ngramBuckets[i]);
 	}
 
 	// Free the list of ngram buckets
-	free(profile.ngramBuckets);
+	free(prof.ngramBuckets);
 }
 
 /* Compares two ngrams to determine if they are the same */
