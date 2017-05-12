@@ -265,7 +265,7 @@ int compareNgrams(ngram current, ngram trav){
 /* iterates through an ingram bucket to determine */
 /* if the bucket contains an ngram */
 /* returns 0 (false) if it does not and 1 (true) if it does */
-int isValidNgram(ngram current, ngramBucket bucket){
+int inBucket(ngram current, ngramBucket bucket){
   int i;
   for(i=0; i < bucket.numNgrams; ++i)
     if( compareNgrams(current, bucket.ngrams[i]) == 1)
@@ -273,3 +273,21 @@ int isValidNgram(ngram current, ngramBucket bucket){
   return 0;
 }
 
+int isValidNgram(ngram current, Profile profile){
+  int i;
+  for(i=0; i< profile.numNgramBuckets; ++i)
+    if( inBucket(current, profile.ngramBuckets[i]) == 1)
+      return 1;
+  return 0;
+}
+char* getProgramName(char* pathname){
+  char *temp, *trav, *buf;
+  temp = NULL;
+  trav = strtok_r(pathname, "/", &buf);
+  while(trav != NULL){
+    free(temp);
+    temp = trav;
+    trav = strtok_r(NULL, "/", &buf);
+  }
+    return temp;
+}

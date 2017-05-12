@@ -4,15 +4,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
+#include <string.h>
 #include <sys/ptrace.h>
+#include <sys/reg.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/reg.h>
 #include <sys/syscall.h>
 #include <libgen.h>
+#include <unistd.h>
+
 #define NGRAM_SIZE 3
 #define HASH 4
 #define NUM_NGRAM_BUCKETS 4
