@@ -194,3 +194,15 @@ int isValidNgram(ngram current, ngramBucket bucket){
   return 0;
 }
 
+
+
+char* getProgramName(char* pathname){
+  char *temp, *trav, *buf;
+
+  trav = strtok_r(pathname, "/", &buf);
+  while(trav != NULL){
+    temp = trav;
+    trav = strtok_r(NULL, "/", &buf);
+  }
+    return temp;
+}
