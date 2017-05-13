@@ -336,7 +336,7 @@ void getSyscalls(const char *path, char *const argv[]) {
 			
 			//log the syscall and the registers
 			//are we at the start or end of a syscall? ignore call 11 and 252
-			if ((regs.orig_eax == 11) || (regs.orig_eax == 252)) {
+			if (regs.orig_eax == 252) {
 				if (addRegisterRecord(2, regs.orig_eax, regs.eax, regs.ebx, regs.ecx, regs.edx, regs.esi, regs.edi))
 					exitGracefully(child);
 			}
@@ -436,13 +436,12 @@ void getSyscalls(const char *path, char *const argv[]) {
 						exitGracefully(child);
 					}
 					newFileName = NULL;
-					fileIO = 1;
 					break;
 				default:
 					break;
 			}
-			//should only log before the syscall, not after
-			if ((regs.eax == -38) && (fileIO))
+			//should only log before the syscall, not after. special case, exec
+			if (((regs.eax == -38) && (fileIO)) || ((regs.eax == 0) && (regs.orig_eax == 11)))
 				addFileRecord(regs.orig_eax, oldFileName, newFileName);
 			
 
