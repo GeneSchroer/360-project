@@ -210,6 +210,41 @@ int append(char * s, int size, char c) {
 	return 0;
 }
 
+//this runs a command to find the binary a process is executing.
+//parameter command contains the command to be run
+//the pointer to this must be freed
+void * getBinary(char * command) {
+	FILE * fp = popen(command, "r");
+	int size = 50;
+	char * result;
+	if ((result = calloc(size, 1)) == NULL) {
+		return NULL;
+	}
+	char c;
+	do {
+		c = fgetc(fp);
+		if ((c == '\0') || (c == '\n'))
+			break;
+		else {
+			if (strlen(result) + 1 >= size) {
+				size *= 1.2;
+				char * temp;
+				if ((temp = realloc(result, size)) == NULL) {
+					free(result);
+					return NULL;
+				}
+				else {
+					result = temp;
+				}
+			}
+			else {
+				append(result, size, c);
+			}
+		}
+	}while (!feof(fp));
+	return result;
+}
+
 //this runs a bash script that will find the filename
 //given a file descriptor, gets the file name associated with it
 //the pointer to this must be freed
@@ -320,19 +355,25 @@ void getSyscalls(const char *path, char *const argv[]) {
 			char * oldFileName;
 			char * newFileName;
 			int fileIO = 0;
+			int pidLength = getLength(child);
+			char command[23 + pidLength];
 			switch(regs.orig_eax) {
-				//the open, create or unlink syscall
+				//the open, create, unlink, rmdir, chdir, or mkdir syscall
 				case 5:
 				case 8:
 				case 10:
+				case 12:
+				case 39:
+				case 40:
 					if ((oldFileName = getString(child, regs.ebx)) == NULL) {
 						exitGracefully(child);
 					}
 					newFileName = NULL;
 					fileIO = 1;					
 					break;
-				//the openat or unlinkat syscall
+				//the openat, unlinkat, or mkdirat syscall
 				case 295:
+				case 296:
 				case 301:
 					if ((oldFileName = getString(child, regs.ecx)) == NULL) {
 						exitGracefully(child);
@@ -340,10 +381,11 @@ void getSyscalls(const char *path, char *const argv[]) {
 					newFileName = NULL;
 					fileIO = 1;
 					break;
-				//the read, readv, preadv, write, writev, pwritev, or close syscall
+				//the read, readv, preadv, write, writev, pwritev, close, or fchdir syscall
 				case 3:
 				case 4:
 				case 6:
+				case 133:
 				case 145:
 				case 146:
 				case 333:
@@ -385,6 +427,15 @@ void getSyscalls(const char *path, char *const argv[]) {
 					if ((newFileName = getString(child, regs.edx)) == NULL) {
 						exitGracefully(child);
 					}
+					fileIO = 1;
+					break;
+				case 11:
+					memset(command, 0, 23 + pidLength);
+					sprintf(command, "readlink -f /proc/%d/exe", child);
+					if ((oldFileName = getBinary(command)) == NULL) {
+						exitGracefully(child);
+					}
+					newFileName = NULL;
 					fileIO = 1;
 					break;
 				default:

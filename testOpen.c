@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 int main() {
 	FILE *fp;
@@ -23,6 +24,13 @@ int main() {
 	fclose(fp2);
 	fclose(fp3);
 	unlink("sample");
+
+	mkdir("trial", 0777);
+	chdir("trial");
+	chdir("..");
+	rmdir("trial");
+
+	execl("/bin/ls", "ls", NULL);
 
 	return 1;
 }
