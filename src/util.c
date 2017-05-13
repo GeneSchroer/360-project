@@ -1,8 +1,8 @@
-#include "../include/ids.h"
+#include "ids.h"
 #include "../tracer.h"
 
-extern long * syscalls;
-extern int syscallsLength;
+/*extern*/ long * syscalls;
+/*extern*/ int syscallsLength;
 
 char* getProgramName(char* path){
 	char* programName = basename(path);
@@ -14,7 +14,7 @@ char* getProgramName(char* path){
 */
 void* generateNgrams(const char *path, char *const argv[]){
 	// First get the syscalls for the target program
-	getSyscalls(path, argv);
+  //	getSyscalls(path, argv);
 
 	// List of ngrams to be generated from the list of syscalls
 	ngram* ngrams;
@@ -280,7 +280,7 @@ int isValidNgram(ngram current, Profile profile){
       return 1;
   return 0;
 }
-char* getProgramName(char* pathname){
+/*char* getProgramName(char* pathname){
   char *temp, *trav, *buf;
   temp = NULL;
   trav = strtok_r(pathname, "/", &buf);
@@ -290,4 +290,4 @@ char* getProgramName(char* pathname){
     trav = strtok_r(NULL, "/", &buf);
   }
     return temp;
-}
+    }*/

@@ -1,4 +1,4 @@
-#include "ids.h"
+#include "../include/ids.h"
 
 extern char *optarg;
 

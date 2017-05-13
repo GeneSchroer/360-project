@@ -1,4 +1,8 @@
 #include "ids.h"
+#include "util.c"
+//char* getProgramName(char* pathname);
+//int isValidNgram(ngram current, Profile profile);
+//void* loadProfile(char* pathname);
 
 int run_defense_mode(char *pathname, char** new_argv){
   pid_t child;
@@ -10,10 +14,10 @@ int run_defense_mode(char *pathname, char** new_argv){
   int i;
   /* Step 1: Load a profile */
   char* programName = getProgramName(pathname);
-  profile = (Profile*)loadProfile(programnNme);
+  profile = (Profile*)loadProfile(programName);
 
   
-  n->sysCalls = malloc(sizeof(int) * (NGRAM_SIZE + 1));
+  n.sysCalls = malloc(sizeof(int) * (NGRAM_SIZE + 1));
 
 
 
@@ -34,7 +38,7 @@ int run_defense_mode(char *pathname, char** new_argv){
 	//	if(orig_eax == SYS_write){
 	//  if(insyscall == 0){
 	//insyscall = 1;
-	n->sysCalls[i] = (int) orig_eax;
+	n.sysCalls[i] = (int) orig_eax;
 	ebx = ptrace(PTRACE_PEEKUSER, child, 4 * EBX, NULL);
 	edx = ptrace(PTRACE_PEEKUSER, child, 4 * EDX, NULL);
 	
@@ -52,7 +56,7 @@ int run_defense_mode(char *pathname, char** new_argv){
 	ptrace(PTRACE_SYSCALL, child, NULL, NULL);
       }
       /* if the ngram is not part of the profile, kill the program */
-      if(isValidNgram(n, profile) == 0){
+      if(isValidNgram(n, *profile) == 0){
 	ptrace(PTRACE_KILL, child, NULL, NULL);
       }
       

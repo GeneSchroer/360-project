@@ -45,8 +45,8 @@ typedef struct{
 	ngramBucket* ngramBuckets;
 	int numNgramBuckets;
 }Profile;
-
-void run_training_mode(char *pathname, char** new_argv);
+//#endif
+//void run_training_mode(char *pathname, char** new_argv);
 
 void printNgrams(ngram* ngrams);
 
@@ -64,9 +64,12 @@ void freeProfile(Profile prof);
 
 int compareNgrams(ngram current, ngram trav);
 
-int isValidNgram(ngram current, ngramBucket bucket);
+int inBucket(ngram current, ngramBucket bucket);
+
+int isValidNgram(ngram current, Profile profile);
 
 char* getProgramName(char* path);
+
 
 
 
