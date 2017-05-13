@@ -1,4 +1,4 @@
-#include "ids.h"
+#include "../include/ids.h"
 #include "../tracer.h"
 
 /*extern*/ long * syscalls;
@@ -14,7 +14,7 @@ char* getProgramName(char* path){
 */
 void* generateNgrams(const char *path, char *const argv[]){
 	// First get the syscalls for the target program
-  //	getSyscalls(path, argv);
+  	getSyscalls(path, argv);
 
 	// List of ngrams to be generated from the list of syscalls
 	ngram* ngrams;
@@ -28,7 +28,7 @@ void* generateNgrams(const char *path, char *const argv[]){
 	}
 	else if(syscallsLength < 3){
 		// Allocate space for one ngram
-		ngrams = (ngram*)malloc(sizeof(ngram));
+		ngrams = (ngram*)malloc(sizeof(ngram) * 2);
 
 		// Allocate space for one int array the size of the number of syscalls
 		currentNgramPointer = (int*)malloc(syscallsLength * sizeof(int));
@@ -40,13 +40,13 @@ void* generateNgrams(const char *path, char *const argv[]){
 
 		// Insert it into the list of ngrams
 		ngrams[0].sysCalls = currentNgramPointer;
-
+		ngrams[1].sysCalls = NULL;
 		return ngrams;
 	}
 	else{
 		// Allocate enough space for a list of ngrams that is the size of the syscalls array minus 2
-		ngrams = (ngram*)malloc((syscallsLength-2) * sizeof(ngram));
-
+		ngrams = (ngram*)malloc((syscallsLength-1) * sizeof(ngram));
+		int counter = 0;
 		for(int i = 0; i < syscallsLength - 2; i++){
 			currentNgramPointer = (int*)malloc(NGRAM_SIZE * sizeof(int));
 
@@ -55,7 +55,9 @@ void* generateNgrams(const char *path, char *const argv[]){
 			currentNgramPointer[2] = syscalls[i+2];
 
 			ngrams[i].sysCalls = currentNgramPointer;
+			counter++;
 		}
+		ngrams[counter].sysCalls = NULL;
 		return ngrams;
 	}
 }
@@ -87,18 +89,20 @@ void* getNgram(char* buf){
 /*
 * Insert an n gram into the bucket specified by the hash of the first element in the ngram
 */
-void insertNgram(Profile prof, ngram n){
+void insertNgram(Profile *prof, ngram n){
 	// Determine the bucket number by taking the first element in the ngram and moduloing it by 4
 	int bucketNum = n.sysCalls[0] % NUM_NGRAM_BUCKETS;
 
 	// Hold the current bucket to add to
-	ngramBucket* currentBucket = &(prof.ngramBuckets[bucketNum]);
+	ngramBucket* currentBucket = &(prof->ngramBuckets[bucketNum]);
+
+	currentBucket->numNgrams++;
 
 	// Resize the current bucket to include room for the new ngram
-	currentBucket = (ngramBucket*)realloc(currentBucket, sizeof(currentBucket->numNgrams + 1 * sizeof(ngram)));
+	currentBucket->ngrams = (ngram*)realloc(currentBucket->ngrams, (currentBucket->numNgrams * sizeof(ngram)));
 
 	// Add the new ngram to the bucket
-	currentBucket->ngrams[currentBucket->numNgrams++] = n;
+	currentBucket->ngrams[currentBucket->numNgrams - 1] = n;
 }
 
 /*
@@ -109,7 +113,7 @@ void insertNgram(Profile prof, ngram n){
 void* loadProfile(char* programName){
 	// Get the name of the profile file given the program name
 	char* profileName = (char*)malloc(256); 
-	strcpy(profileName, "../profiles/"); 
+	strcpy(profileName, "profiles/"); 
 	strcat(profileName, programName);
 	strcat(profileName, "_profile.txt");
 
@@ -124,14 +128,15 @@ void* loadProfile(char* programName){
 	newProfile->numCalled = 0;
 	//newProfile.numDirectories = 0;
 	//newProfile.directories = (char*)malloc(sizeof(char*));
-	newProfile->ngramBuckets = (ngramBucket*)malloc(NUM_NGRAM_BUCKETS*sizeof(ngramBucket));
+	//newProfile->ngramBuckets = (ngramBucket*)malloc(NUM_NGRAM_BUCKETS*sizeof(ngramBucket));
+
 	newProfile->numNgramBuckets = NUM_NGRAM_BUCKETS;
 
 	// Initialize all of the ngramBuckets to a size of zero
-	for(int i = 0; i < newProfile->numNgramBuckets; i++){
+	for(int i = 0; i < NUM_NGRAM_BUCKETS; i++){
 		newProfile->ngramBuckets[i].numNgrams = 0;
+		newProfile->ngramBuckets[i].ngrams = (ngram*)malloc(sizeof(ngram));
 	}
-
 	// If there is no profile made for the current program then return the empty profile struct, otherwise fill it with the information from the file
 	if(profile == NULL){
 		return newProfile;
@@ -146,12 +151,10 @@ void* loadProfile(char* programName){
 	// Get the number of times the program was called
 	int numCalled = atoi(buf);
 	newProfile->numCalled = numCalled;
-
 	// Get the ngram at the current line and add it to the profile
 	while(fgets(buf,256,profile)){
 		ngram* currentNgram = (ngram*)getNgram(buf);
-
-		insertNgram(*newProfile, *currentNgram);
+		insertNgram(newProfile, *currentNgram);
 	}
 
 	// Close the file
@@ -219,7 +222,6 @@ void writeProfile(Profile* profile, char* programName){
 	}
 	*/
 	
-
 	// Loop through all of the ngrams and write each sequence on its own line in the file
 	for(int i = 0; i < profile->numNgramBuckets; i++){
 		for(int j = 0; j < profile->ngramBuckets[i].numNgrams; j++){
@@ -227,7 +229,6 @@ void writeProfile(Profile* profile, char* programName){
 			fprintf(profileFile, "%d %d %d\n", currentNgram[0], currentNgram[1], currentNgram[2]);
 		}
 	}
-
 	// Close the file
 	fclose(profileFile);
 
@@ -248,7 +249,30 @@ void freeProfile(Profile prof){
 	}
 
 	// Free the list of ngram buckets
-	free(prof.ngramBuckets);
+	//free(prof.ngramBuckets);
+}
+
+// Inserts a list of ngrams into a profile if they don't already exist in the profile
+void insertNgrams(Profile *profile, ngram* ngrams){
+	ngram pointer;
+	int i = 0;
+	int bucketNum = 0;
+	
+	while(1){
+		pointer = ngrams[i];
+
+		if(pointer.sysCalls == NULL){
+			return;
+		}
+		
+		bucketNum = pointer.sysCalls[0] % NUM_NGRAM_BUCKETS;
+		if(!inBucket(pointer, profile->ngramBuckets[bucketNum])){
+			profile->ngramBuckets[bucketNum].numNgrams++;
+			profile->ngramBuckets[bucketNum].ngrams = (ngram*)realloc(profile->ngramBuckets[bucketNum].ngrams, profile->ngramBuckets[bucketNum].numNgrams * sizeof(ngram));
+			profile->ngramBuckets[bucketNum].ngrams[profile->ngramBuckets[bucketNum].numNgrams - 1] = pointer;
+		}
+		i++;
+	}
 }
 
 /* Compares two ngrams to determine if they are the same */

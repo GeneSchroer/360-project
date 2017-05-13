@@ -6,16 +6,70 @@ void run_training_mode(char *pathname, char** new_argv){
 
   Profile *programProfile = (Profile*)loadProfile(programName);
 
+  programProfile->numCalled++;
+
   // Using the syscalls from the program, generate ngrams 
   ngram* ngrams = generateNgrams(pathname, new_argv);
 
-  printNgrams(ngrams);
+  // Insert ngrams
+  insertNgrams(programProfile, ngrams);
+
+  //printNgrams(ngrams);
 
   writeProfile(programProfile, programName);
 
   // TODO fix this
   //freeProfile(*programProfile);
+  
+  return;
+}
 
+void printNgrams(ngram* ngrams){
+	int i = 0;
+	ngram pointer;
+
+	while(1){
+		pointer = ngrams[i];
+
+		if(pointer.sysCalls == NULL){
+			return;
+		}
+
+		printf("%d %d %d\n", pointer.sysCalls[0], pointer.sysCalls[1], pointer.sysCalls[2]);
+		
+		i++;
+	}
+}
+
+int main(){
+	char * args[] = {"./testOpen", NULL};
+
+	run_training_mode("/home/sekar/Desktop/360/testOpen", args);
+
+	return 1;
+}
+
+
+/*
+pid_t child;
+  long orig_eax;
+  child = fork();
+  if(child==0){
+    ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+    execv(pathname, new_argv);
+  }
+  else{
+    wait(NULL);
+    orig_eax = ptrace(PTRACE_PEEKUSER, child, 4 * ORIG_EAX, NULL);
+    printf("The child made a system call %ld\n", orig_eax);
+    ptrace(PTRACE_CONT, child, NULL, NULL);
+
+  }
+*/
+
+
+
+/*
   pid_t child;
   long orig_eax, eax, ebx, edx;
   int status;
@@ -23,7 +77,7 @@ void run_training_mode(char *pathname, char** new_argv){
   ngram n;
   Profile *profile = malloc(sizeof(Profile));
   int i;
-  /* Step 1: Load a profile */
+  // Step 1: Load a profile 
   char* programName = getProgramName(pathname);
   profile = (Profile*)loadProfile(programName);
 
@@ -32,8 +86,8 @@ void run_training_mode(char *pathname, char** new_argv){
 
 
 
-  /* Step ? - Create a child process and execute the input program */
-  /*  child = fork();
+  // Step ? - Create a child process and execute the input program 
+  //  child = fork();
   if(child==0){
     ptrace(PTRACE_TRACEME, 0, NULL, NULL);
     execv(pathname, new_argv);
@@ -71,54 +125,4 @@ void run_training_mode(char *pathname, char** new_argv){
     }
   }
   return 0;
-*/
-
-
-
-  
-  return;
-}
-
-void printNgrams(ngram* ngrams){
-	int i = 0;
-	ngram pointer;
-
-
-
-	while(1){
-		pointer = ngrams[i];
-
-		if(pointer.sysCalls == NULL){
-			return;
-		}
-
-		printf("%d %d %d\n", pointer.sysCalls[0], pointer.sysCalls[1], pointer.sysCalls[2]);
-		i++;
-	}
-}
-
-/*int main(){
-	char * args[] = {"./testOpen", NULL};
-
-	run_training_mode("/home/sekar/Desktop/360/testOpen", args);
-
-	return 1;
-	}*/
-
-
-/*
-pid_t child;
-  long orig_eax;
-  child = fork();
-  if(child==0){
-    ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-    execv(pathname, new_argv);
-  }
-  else{
-    wait(NULL);
-    orig_eax = ptrace(PTRACE_PEEKUSER, child, 4 * ORIG_EAX, NULL);
-    printf("The child made a system call %ld\n", orig_eax);
-    ptrace(PTRACE_CONT, child, NULL, NULL);
-
-  }
 */

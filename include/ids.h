@@ -39,11 +39,10 @@ typedef struct{
 	
 	// Number of times this program was called in training mode
 	int numCalled;
-	
+	int numNgramBuckets;
 	// List of 4 ngram buckets in which ngrams will be placed. The bucket number is determined by taking ngram->sysCalls[0] % 4
 	// This simple hash will reduce search times for an existing ngram sequence in both training mode and defense mode
-	ngramBucket* ngramBuckets;
-	int numNgramBuckets;
+	ngramBucket ngramBuckets[NUM_NGRAM_BUCKETS];
 }Profile;
 //#endif
 //void run_training_mode(char *pathname, char** new_argv);
@@ -54,7 +53,7 @@ void* generateNgrams(const char *path, char *const argv[]);
 
 void* getNgram(char* buf);
 
-void insertNgram(Profile prof, ngram n);
+void insertNgram(Profile *prof, ngram n);
 
 void* loadProfile(char* programName);
 
@@ -69,6 +68,8 @@ int inBucket(ngram current, ngramBucket bucket);
 int isValidNgram(ngram current, Profile profile);
 
 char* getProgramName(char* path);
+
+void insertNgrams(Profile *profile, ngram* ngrams);
 
 
 
