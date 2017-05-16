@@ -2,6 +2,7 @@
 
 #define IDSHEADER
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,10 +11,12 @@
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
+#include <sys/user.h>
 #include <sys/wait.h>
 #include <sys/reg.h>
 #include <sys/syscall.h>
 #include <libgen.h>
+#include <limits.h>
 #include <unistd.h>
 
 #define NGRAM_SIZE 3

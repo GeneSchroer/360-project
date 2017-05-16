@@ -1,15 +1,7 @@
-#include <sys/ptrace.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <sys/user.h>
-#include <stdio.h>
-#include <sys/reg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <limits.h>
-#include <errno.h>
+#ifndef TRACER_GUARD
+
+#define TRACER_GUARD
+#include "ids.h"
 
 struct files {
 	struct files * next;
@@ -69,3 +61,4 @@ void exitGracefully();
 
 void getSyscalls(const char *path, char *const argv[]);
 
+#endif

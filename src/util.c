@@ -1,5 +1,5 @@
-#include "../include/ids.h"
-#include "../tracer.h"
+#include "ids.h"
+#include "tracer.h"
 
 /*extern*/ long * syscalls;
 /*extern*/ int syscallsLength;
@@ -14,7 +14,7 @@ char* getProgramName(char* path){
 */
 void* generateNgrams(const char *path, char *const argv[]){
 	// First get the syscalls for the target program
-  	getSyscalls(path, argv);
+    	getSyscalls(path, argv);
 
 	// List of ngrams to be generated from the list of syscalls
 	ngram* ngrams;

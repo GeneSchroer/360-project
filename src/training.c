@@ -41,14 +41,14 @@ void printNgrams(ngram* ngrams){
 	}
 }
 
-int main(){
+/*int main(){
 	char * args[] = {"./testOpen", NULL};
 
 	run_training_mode("/home/sekar/Desktop/360/testOpen", args);
 
 	return 1;
 }
-
+*/
 
 /*
 pid_t child;

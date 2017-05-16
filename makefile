@@ -25,7 +25,7 @@ testOpen:
 	$(CC) $(CFLAGS) -o testOpen testOpen.c
 
 ids:
-	$(CC) include/ids.h src/ids.c src/training.c src/defense.c -o IDS -Iinclude
+	$(CC) include/ids.h include/tracer.h src/tracer.c src/ids.c src/training.c src/defense.c -o IDS -Iinclude
 
 clean:
 	rm -f $(OBJECTS) $(BINARIES) 
