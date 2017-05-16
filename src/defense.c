@@ -1,10 +1,11 @@
-#include "ids.h"
-#include "util.c"
+#include "../include/ids.h"
+//#include "util.c"
 //char* getProgramName(char* pathname);
 //int isValidNgram(ngram current, Profile profile);
 //void* loadProfile(char* pathname);
 
 int run_defense_mode(char *pathname, char** new_argv){
+  /*
   pid_t child;
   long orig_eax, eax, ebx, edx;
   int status;
@@ -12,7 +13,7 @@ int run_defense_mode(char *pathname, char** new_argv){
   ngram n;
   Profile *profile = malloc(sizeof(Profile));
   int i;
-  /* Step 1: Load a profile */
+  // Step 1: Load a profile
   char* programName = getProgramName(pathname);
   profile = (Profile*)loadProfile(programName);
 
@@ -21,7 +22,7 @@ int run_defense_mode(char *pathname, char** new_argv){
 
 
 
-  /* Step ? - Create a child process and execute the input program */
+  // Step ? - Create a child process and execute the input program 
   child = fork();
   if(child==0){
     ptrace(PTRACE_TRACEME, 0, NULL, NULL);
@@ -55,12 +56,13 @@ int run_defense_mode(char *pathname, char** new_argv){
       
 	ptrace(PTRACE_SYSCALL, child, NULL, NULL);
       }
-      /* if the ngram is not part of the profile, kill the program */
+      // if the ngram is not part of the profile, kill the program 
       if(isValidNgram(n, *profile) == 0){
 	ptrace(PTRACE_KILL, child, NULL, NULL);
       }
       
     }
   }
+*/
   return 0;
 }

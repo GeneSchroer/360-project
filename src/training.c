@@ -41,8 +41,10 @@ void printNgrams(ngram* ngrams){
 	}
 }
 
+
 /*int main(){
-	char * args[] = {"./testOpen", NULL};
+	//char * args[] = {"./testOpen", NULL};
+	char * args[] = {NULL};
 
 	run_training_mode("/home/sekar/Desktop/360/testOpen", args);
 
