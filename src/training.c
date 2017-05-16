@@ -1,4 +1,4 @@
-#include "../include/ids.h"
+#include "ids.h"
 
 void run_training_mode(char *pathname, char** new_argv){
   // Attempt to load in previously made profile into a struct
