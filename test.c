@@ -9,7 +9,7 @@ int main() {
 	int counter = 0;
 	//this prints out all the syscalls in chronological order
 	for(; counter < syscallsLength; counter++) {
-		//printf("syscall #: %ld\n", syscalls[counter]);
+		printf("syscall #: %ld\n", syscalls[counter]);
 	}
 	freeAll();
 	return 1;
