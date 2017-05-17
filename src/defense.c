@@ -53,6 +53,7 @@ int run_defense_mode(char *pathname, char** new_argv){
 		check = 0;
 
 		ptrace(PTRACE_SYSCALL, child, 0, 0);
+	}
  }
 
   return 0;
