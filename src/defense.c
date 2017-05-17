@@ -5,7 +5,7 @@
 //void* loadProfile(char* pathname);
 
 int run_defense_mode(char *pathname, char** new_argv){
-  /*
+  
   pid_t child;
   long orig_eax, eax, ebx, edx;
   int status;
@@ -29,40 +29,31 @@ int run_defense_mode(char *pathname, char** new_argv){
     execv(pathname, new_argv);
   }
   else{
-    while(1){
-      for(i = 0; i<NGRAM_SIZE; ++i){
-	
-	wait(&status);
-	if(WIFEXITED(status))
-	  break;
-	orig_eax = ptrace(PTRACE_PEEKUSER, child, 4 * ORIG_EAX, NULL);
-	//	if(orig_eax == SYS_write){
-	//  if(insyscall == 0){
-	//insyscall = 1;
-	n.sysCalls[i] = (int) orig_eax;
-	ebx = ptrace(PTRACE_PEEKUSER, child, 4 * EBX, NULL);
-	edx = ptrace(PTRACE_PEEKUSER, child, 4 * EDX, NULL);
-	
-	//	ebx = ptrace(PTRACE_PEEKUSER, child, 4 * EBX, NULL);
-	printf("Write called with: %ld %ld %ld\n", orig_eax, ebx, edx);
-	//	  }
-	//else{
-	//  eax = ptrace(PTRACE_PEEKUSER, child, 4 * EAX, NULL);
-	//  printf("Write returned "
-	//		   "with %ld\n", eax);
-	//insyscall = 0;
-	//}
-	//}
-      
-	ptrace(PTRACE_SYSCALL, child, NULL, NULL);
-      }
-      // if the ngram is not part of the profile, kill the program 
-      if(isValidNgram(n, *profile) == 0){
-	ptrace(PTRACE_KILL, child, NULL, NULL);
-      }
-      
-    }
-  }
-*/
+   	struct user_regs_struct regs;
+	int status = 0;
+	int check = 0;
+	while(waitpid(child, &status, 0) && (!WIFEXITED(status))) {
+		ptrace(PTRACE_GETREGS, child, NULL, &regs);
+
+		//PTRACE_SYSCALL stops at beginning and end of syscall. should only log once
+
+		//this marks beginning of syscall, should add to list
+		if (regs.eax == -38) {
+			check = 1;
+		}
+
+		//if check, then new syscall was added. generate the new ngrams
+		if (check) {
+
+		}
+
+		//then check if these ngrams are allowed. if so, kill it with kill(pid, SIGKILL)
+
+		//reset check for next iteration of loop
+		check = 0;
+
+		ptrace(PTRACE_SYSCALL, child, 0, 0);
+ }
+
   return 0;
 }
