@@ -52,34 +52,36 @@ int run_defense_mode(char *pathname, char** new_argv){
       if (sysCheck) {
 	//if the program hasn't made enough sysCalls to create a complete ngram,
 	//then fill up a Ngram variable with sysCall numbers
-	if(!haveNgram){
-	  if(trav.sysCalls[0] == -1)
-	    trav.sysCalls[0] = (int)regs.orig_eax;
-	  else if(trav.sysCalls[1] == -1)
-	    trav.sysCalls[1] = (int)regs.orig_eax;
-	  else{
-	    trav.sysCalls[2] = (int)regs.orig_eax;
-	    haveNgram = 1;
-	  }
+	
+	if(trav.sysCalls[0] == -1)
+	  trav.sysCalls[0] = (int)regs.orig_eax;
+	else if(trav.sysCalls[1] == -1)
+	  trav.sysCalls[1] = (int)regs.orig_eax;
+	else if(trav.sysCalls[2] == -1){
+	  trav.sysCalls[2] = (int)regs.orig_eax;
+	  haveNgram = 1;
+	}
+	else{
+	  trav.sysCalls[0] = trav.sysCalls[1];
+	  trav.sysCalls[1] = trav.sysCalls[2];
+	  trav.sysCalls[2] = (int)regs.orig_eax;
 	}
 
 	// If the Ngram is not part of the profile,
 	// note the invalid syscall and kill the program.
-	else if(isValidNgram(trav, *profile) == 0){
-	  printf("Invalid Ngram discovered: "
-		 "%d, %d, %d\n", trav.sysCalls[0],
-		 trav.sysCalls[1], trav.sysCalls[2]);
-	  ptrace(PTRACE_KILL, child, NULL, NULL);
+	if(haveNgram){
+	  if(isValidNgram(trav, *profile) == 0){
+	    printf("Invalid Ngram discovered: "
+		   "%d, %d, %d\n", trav.sysCalls[0],
+		   trav.sysCalls[1], trav.sysCalls[2]);
+	    ptrace(PTRACE_KILL, child, NULL, NULL);
+	  }
+	  else{
+	    //	    printf("Good ngram: %d %d %d\n", trav.sysCalls[0],
+		   trav.sysCalls[1], trav.sysCalls[2]);
+	  }
+	  
 	}
-	else{
-	  printf("Good ngram: %d %d %d\n", trav.sysCalls[0],
-		 trav.sysCalls[1], trav.sysCalls[2]);
-	  printf("Next ngram\n");
-	  trav.sysCalls[2] = trav.sysCalls[1];
-	  trav.sysCalls[1] = trav.sysCalls[0];
-	  trav.sysCalls[0] = (int)regs.orig_eax;
-	}
-	
       }
 
 	       
