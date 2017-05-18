@@ -5,18 +5,18 @@ int run_defense_mode(char *pathname, char** new_argv, int ngramSize){
   pid_t child;
   char* programName = getProgramName(pathname); // program name
   Profile *profile = (Profile*)loadProfile(programName,ngramSize); // program's profile
-  int i, j, k;
+  int i;//, j, k;
   //  int fd = open("outputfile", O_);
   ngram trav; // The current Ngram we are monitoring.
   int intrusion=0;
 
-  int unfilled=1; // flag to determine if the traversal ngram is filled or not
+  //  int unfilled=1; // flag to determine if the traversal ngram is filled or not
   //for(i = 0; i < NUM_NGRAM_BUCKETS; ++i){
     //for(j = 0; ;)
   
   // Load the up the Ngram with -1s, as we haven't stored syscalls yet
-  trav.sysCalls = malloc(sizeof(int) * (NGRAM_SIZE + 1));
-  for(i = 0; i < NGRAM_SIZE;++i){
+  trav.sysCalls = malloc(sizeof(int) * (ngramSize));
+  for(i = 0; i < ngramSize;++i){
     trav.sysCalls[i] = -1;
   }
 
@@ -54,7 +54,7 @@ int run_defense_mode(char *pathname, char** new_argv, int ngramSize){
 	//if the program hasn't made enough sysCalls to create a complete ngram,
 	//then fill up a Ngram variable with sysCall numbers
 	if(!haveNgram){
-	  for(i=0;i<NGRAM_SIZE;){
+	  for(i=0;i<ngramSize;){
 	    if(trav.sysCalls[i] == -1){
 	      trav.sysCalls[i] = (int)regs.orig_eax;
 	      ++i;
@@ -62,11 +62,11 @@ int run_defense_mode(char *pathname, char** new_argv, int ngramSize){
 	    }
 	    ++i;
 	  }
-	  if(i == NGRAM_SIZE)
+	  if(i == ngramSize)
 	    haveNgram = 1;
 	}
 	else{
-	  for(i=0;i<NGRAM_SIZE-1;++i)
+	  for(i=0;i<ngramSize-1;++i)
 	    trav.sysCalls[i] = trav.sysCalls[i+1];
 	  trav.sysCalls[i] = (int)regs.orig_eax;
 	}
@@ -76,7 +76,7 @@ int run_defense_mode(char *pathname, char** new_argv, int ngramSize){
 	if(haveNgram){
 	  if(isValidNgram(trav, *profile) == 0){
 	    printf("Invalid Ngram discovered: ");
-	    for(i=0;i<NGRAM_SIZE;++i)
+	    for(i=0;i<ngramSize;++i)
 	      printf("%d ", trav.sysCalls[i]);
 	    printf("\n");
 	    ptrace(PTRACE_KILL, child, NULL, NULL);

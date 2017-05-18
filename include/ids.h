@@ -19,7 +19,7 @@
 #include <limits.h>
 #include <unistd.h>
 
-#define NGRAM_SIZE 3
+//#define NGRAM_SIZE 3
 #define HASH 4
 #define NUM_NGRAM_BUCKETS 4
 
