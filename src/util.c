@@ -67,25 +67,27 @@ void* generateNgrams(const char *path, char *const argv[], int ngramSize){
 */
 void* getNgram(char* buf, int ngramSize){
 	int n = 0;
-	printf("Before: %s\n", buf);
-	ngram* currentNgram = (ngram*)malloc(sizeof(ngram));
-	printf("After\n");
-	//ngram* currentNgram = malloc(sizeof(ngram));
 
-	int* sysCalls = malloc(ngramSize * sizeof(int));
+	ngram* currentNgram = NULL;
+	currentNgram = (ngram*)malloc(sizeof(int*));
+
+	//ngram* currentNgram = malloc(sizeof(ngram));
+	int* sysCalls = (int*)malloc(ngramSize * sizeof(int));
 	
 	for(int i = 0; i < ngramSize; i++){
 		sysCalls[i]=-1;
 	}
 
-	char* pch = strtok (buf," ");
+	char* pch = strtok (buf," \n");
 	while (pch != NULL)
 	{
 	  sysCalls[n++] = atoi(pch);
-	  pch = strtok (NULL, " ");
+	  pch = strtok (NULL, " \n");
 	}
 
 	currentNgram->sysCalls = sysCalls;
+
+	sysCalls = NULL;
 
 	return currentNgram;
 }
@@ -234,7 +236,6 @@ void insertNgrams(Profile *profile, ngram* ngrams){
   ngram pointer;
   int i = 0;
   int bucketNum = 0;
-  
   while(1){
     pointer = ngrams[i];
     
