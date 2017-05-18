@@ -10,6 +10,7 @@ int run_defense_mode(char *pathname, char** new_argv){
   ngram trav; // The current Ngram we are monitoring.
   int intrusion=0;
 
+  int unfilled=1; // flag to determine if the traversal ngram is filled or not
   //for(i = 0; i < NUM_NGRAM_BUCKETS; ++i){
     //for(j = 0; ;)
   
@@ -52,28 +53,32 @@ int run_defense_mode(char *pathname, char** new_argv){
       if (sysCheck) {
 	//if the program hasn't made enough sysCalls to create a complete ngram,
 	//then fill up a Ngram variable with sysCall numbers
-	
-	if(trav.sysCalls[0] == -1)
-	  trav.sysCalls[0] = (int)regs.orig_eax;
-	else if(trav.sysCalls[1] == -1)
-	  trav.sysCalls[1] = (int)regs.orig_eax;
-	else if(trav.sysCalls[2] == -1){
-	  trav.sysCalls[2] = (int)regs.orig_eax;
-	  haveNgram = 1;
+	if(!haveNgram){
+	  for(i=0;i<NGRAM_SIZE;){
+	    if(trav.sysCalls[i] == -1){
+	      trav.sysCalls[i] = (int)regs.orig_eax;
+	      ++i;
+	      break;
+	    }
+	    ++i;
+	  }
+	  if(i == NGRAM_SIZE)
+	    haveNgram = 1;
 	}
 	else{
-	  trav.sysCalls[0] = trav.sysCalls[1];
-	  trav.sysCalls[1] = trav.sysCalls[2];
-	  trav.sysCalls[2] = (int)regs.orig_eax;
+	  for(i=0;i<NGRAM_SIZE-1;++i)
+	    trav.sysCalls[i] = trav.sysCalls[i+1];
+	  trav.sysCalls[i] = (int)regs.orig_eax;
 	}
 
 	// If the Ngram is not part of the profile,
 	// note the invalid syscall and kill the program.
 	if(haveNgram){
 	  if(isValidNgram(trav, *profile) == 0){
-	    printf("Invalid Ngram discovered: "
-		   "%d, %d, %d\n", trav.sysCalls[0],
-		   trav.sysCalls[1], trav.sysCalls[2]);
+	    printf("Invalid Ngram discovered: ");
+	    for(i=0;i<NGRAM_SIZE;++i)
+	      printf("%d ", trav.sysCalls[i]);
+	    printf("\n");
 	    ptrace(PTRACE_KILL, child, NULL, NULL);
 	    intrusion = 1;
 	  }
