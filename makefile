@@ -10,7 +10,7 @@ OBJECTS = tracer.o
 all: $(BINARIES)
 
 test: $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) test.c -o linkTest
+	$(CC) $(CFLAGS) $(OBJECTS) include/tracer.h test.c -o linkTest -Iinclude
 
 train: $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) src/training.c src/util.c -o trainTest 

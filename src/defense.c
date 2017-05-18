@@ -1,10 +1,10 @@
 #include "ids.h"
 
 
-int run_defense_mode(char *pathname, char** new_argv){  
+int run_defense_mode(char *pathname, char** new_argv, int ngramSize){  
   pid_t child;
   char* programName = getProgramName(pathname); // program name
-  Profile *profile = (Profile*)loadProfile(programName); // program's profile
+  Profile *profile = (Profile*)loadProfile(programName,ngramSize); // program's profile
   int i, j, k;
   //  int fd = open("outputfile", O_);
   ngram trav; // The current Ngram we are monitoring.

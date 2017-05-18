@@ -23,7 +23,7 @@
 #define HASH 4
 #define NUM_NGRAM_BUCKETS 4
 
-// A list of at most three system calls recorded from the program
+// A list of at most n system calls recorded from the program
 typedef struct{
   int* sysCalls;
 }ngram;
@@ -36,9 +36,8 @@ typedef struct{
 
 // Holds all information for a program's IDS profile
 typedef struct{
-	// A list of all directories and files accessible by this program
-	char** directories;
-	int numDirectories;
+	// The size of ngrams in this profile
+	int ngramSize;
 	
 	// Number of times this program was called in training mode
 	int numCalled;
@@ -52,21 +51,21 @@ typedef struct{
 
 void printNgrams(ngram* ngrams);
 
-void* generateNgrams(const char *path, char *const argv[]);
+void* generateNgrams(const char *path, char *const argv[], int ngramSize);
 
-void* getNgram(char* buf);
+void* getNgram(char* buf, int ngramSize);
 
 void insertNgram(Profile *prof, ngram n);
 
-void* loadProfile(char* programName);
+void* loadProfile(char* programName, int ngramSize);
 
 void writeProfile(Profile* profile, char* programName);
 
 void freeProfile(Profile prof);
 
-int compareNgrams(ngram current, ngram trav);
+int compareNgrams(ngram current, ngram trav, int ngramSize);
 
-int inBucket(ngram current, ngramBucket bucket);
+int inBucket(ngram current, ngramBucket bucket, int ngramSize);
 
 int isValidNgram(ngram current, Profile profile);
 
