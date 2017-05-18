@@ -9,7 +9,7 @@ int run_defense_mode(char *pathname, char** new_argv, int ngramSize){
   //  int fd = open("outputfile", O_);
   ngram trav; // The current Ngram we are monitoring.
   int intrusion=0;
-
+  //  int j = 0;
   //  int unfilled=1; // flag to determine if the traversal ngram is filled or not
   //for(i = 0; i < NUM_NGRAM_BUCKETS; ++i){
     //for(j = 0; ;)
@@ -35,7 +35,7 @@ int run_defense_mode(char *pathname, char** new_argv, int ngramSize){
                        // to form a complete ngram
     // sysCheck = 1;
     while(1){
-
+      //  printf("%d\n", j++);
       wait(&status);
       if(WIFEXITED(status)||WIFSIGNALED(status))
 	break;
