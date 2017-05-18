@@ -26,36 +26,37 @@ int main(int argc, char* argv[]){
 	}
 
 	 
-	 char **new_argv = malloc(sizeof(char**) * (argc-1) );
-	 new_argv[0] = pathname;
-	 int i, j;
-	 for(i = 1, j = 3; j<argc; i++, j++){
-	   new_argv[i] = argv[j];
-
-	 }
-	 new_argv[i]=NULL;
-
-
-	 opt = argv[1][1];
-	 nSize = atoi(argv[2]);
-	switch(opt){
-	 case 'D':
-	   printf("Running Defense Mode\n");
-	   run_defense_mode(pathname, new_argv, nSize);
-	   return 0;
-	    
-	 case 'T':
-	   printf("Running Training Mode\n");
-	   run_training_mode(pathname, new_argv, nSize);
-	   return 0;
-	 default:
-	   printf("Error: Not a valid option!\n");
-	   return -1;
-	 }
+	char **new_argv = malloc(sizeof(char**) * (argc-1) );
+	new_argv[0] = pathname;
+	int i, j;
+	for(i = 1, j = 3; j<argc; i++, j++){
+	  new_argv[i] = argv[j];
 	  
-
-
-
+	}
+	new_argv[i]=NULL;
+	
+	
+	opt = argv[1][1];
+	nSize = atoi(argv[2]);
+	printf("%d\n", nSize);
+	switch(opt){
+	case 'D':
+	  printf("Running Defense Mode\n");
+	  run_defense_mode(pathname, new_argv, nSize);
+	  return 0;
+	  
+	case 'T':
+	  printf("Running Training Mode\n");
+	  run_training_mode(pathname, new_argv, nSize);
+	  return 0;
+	default:
+	  printf("Error: Not a valid option!\n");
+	  return -1;
+	}
+	
+	
+	
+	
 	lstat(argv[3], lbuf);
-
+	
 }
