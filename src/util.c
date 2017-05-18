@@ -67,7 +67,9 @@ void* generateNgrams(const char *path, char *const argv[], int ngramSize){
 */
 void* getNgram(char* buf, int ngramSize){
 	int n = 0;
+	printf("Before: %s\n", buf);
 	ngram* currentNgram = (ngram*)malloc(sizeof(ngram));
+	printf("After\n");
 	int* sysCalls = malloc(ngramSize * sizeof(int));
 	
 	for(int i = 0; i < ngramSize; i++){
