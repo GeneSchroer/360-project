@@ -8,7 +8,7 @@ int run_defense_mode(char *pathname, char** new_argv){
   int i, j, k;
   //  int fd = open("outputfile", O_);
   ngram trav; // The current Ngram we are monitoring.
-
+  int intrusion=0;
 
   //for(i = 0; i < NUM_NGRAM_BUCKETS; ++i){
     //for(j = 0; ;)
@@ -75,22 +75,26 @@ int run_defense_mode(char *pathname, char** new_argv){
 		   "%d, %d, %d\n", trav.sysCalls[0],
 		   trav.sysCalls[1], trav.sysCalls[2]);
 	    ptrace(PTRACE_KILL, child, NULL, NULL);
+	    intrusion = 1;
 	  }
 	  else{
 	    //	    printf("Good ngram: %d %d %d\n", trav.sysCalls[0],
-		   trav.sysCalls[1], trav.sysCalls[2]);
+	    //	   trav.sysCalls[1], trav.sysCalls[2]);
 	  }
-	  
+	
 	}
-      }
+    
 
-	       
+      }	       
 
-      //reset check for next iteration of loop
-      sysCheck = 0;
-		
-      ptrace(PTRACE_SYSCALL, child, 0, 0);
+    //reset check for next iteration of loop
+    sysCheck = 0;
+    
+    ptrace(PTRACE_SYSCALL, child, 0, 0);
+    
     }
   }
+  if(!intrusion)
+    printf("IDS did not detect any intrusions\n");
   return 0;
 }
