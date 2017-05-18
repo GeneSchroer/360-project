@@ -90,5 +90,6 @@ int run_defense_mode(char *pathname, char** new_argv){
       ptrace(PTRACE_SYSCALL, child, 0, 0);
     }
   }
+  printf("Finished\n");
   return 0;
 }
