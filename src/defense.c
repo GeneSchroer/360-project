@@ -83,8 +83,8 @@ int run_defense_mode(char *pathname, char** new_argv, int ngramSize){
 	    intrusion = 1;
 	  }
 	  else{
-	    //	    printf("Good ngram: %d %d %d\n", trav.sysCalls[0],
-	    //	   trav.sysCalls[1], trav.sysCalls[2]);
+	    	    //printf("Good ngram: %d %d %d\n", trav.sysCalls[0],
+	    	   //trav.sysCalls[1], trav.sysCalls[2]);
 	  }
 	
 	}
