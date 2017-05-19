@@ -1,5 +1,6 @@
 #include "ids.h"
 
+void writeErrorLog(ngram *list, char *programName, int ngramSize, int n);
 
 int run_defense_mode(char *pathname, char** new_argv, int ngramSize){  
   pid_t child;
@@ -9,17 +10,17 @@ int run_defense_mode(char *pathname, char** new_argv, int ngramSize){
   //  int fd = open("outputfile", O_);
   ngram trav; // The current Ngram we are monitoring.
   int intrusion=0;
-  //  int j = 0;
-  //  int unfilled=1; // flag to determine if the traversal ngram is filled or not
-  //for(i = 0; i < NUM_NGRAM_BUCKETS; ++i){
-    //for(j = 0; ;)
+
+  ngram *list = malloc(sizeof(ngram));
+  list[0].sysCalls = malloc(sizeof(int) * ngramSize);
+  int n=0;
   
   // Load the up the Ngram with -1s, as we haven't stored syscalls yet
-  trav.sysCalls = malloc(sizeof(int) * (ngramSize));
+  trav.sysCalls = malloc(sizeof(int) * ngramSize);
   for(i = 0; i < ngramSize;++i){
     trav.sysCalls[i] = -1;
   }
-
+  
   
   // Step ? - Create a child process and execute the input program 
   child = fork();
@@ -80,11 +81,20 @@ int run_defense_mode(char *pathname, char** new_argv, int ngramSize){
 	      printf("%d ", trav.sysCalls[i]);
 	    printf("\n");
 	    ptrace(PTRACE_KILL, child, NULL, NULL);
+	    memcpy(list[n].sysCalls, trav.sysCalls, sizeof(int)*ngramSize);
+	    ++n;
+	    writeErrorLog(list, programName, ngramSize, n);
+
+
 	    intrusion = 1;
 	  }
+	  // add the syscall to the list
 	  else{
-	    //	    printf("Good ngram: %d %d %d\n", trav.sysCalls[0],
-	    //	   trav.sysCalls[1], trav.sysCalls[2]);
+	    memcpy(list[n].sysCalls, trav.sysCalls, sizeof(int)*ngramSize);
+	    ++n;
+	    list = realloc(list, sizeof(ngram) * n + 1);
+	    list[n].sysCalls = malloc(sizeof(int) * ngramSize);
+	    
 	  }
 	
 	}
@@ -104,4 +114,38 @@ int run_defense_mode(char *pathname, char** new_argv, int ngramSize){
     printf("IDS did not detect any intrusions\n");
 
   return 0;
+}
+
+
+// Append the list of ngrams to the errorLog,
+// or create one if it doesn't exist.
+void writeErrorLog(ngram *list, char *programName, int ngramSize, int n){
+  int i, j;
+  char *errorLog = malloc(sizeof(char) * 256);
+  strcpy(errorLog, "errorLog/");
+  strcat(errorLog, programName);
+  char sizeNgram[5];
+  sprintf(sizeNgram, "%d", ngramSize);
+  strcat(errorLog, sizeNgram);
+  strcat(errorLog,"_errorLog.txt");
+  char buf[5];
+  int fd = open(errorLog, O_WRONLY | O_APPEND | O_CREAT,
+	   S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+
+  //  printf("%d %d %d\n", ngramSize, n, fd);
+  
+  write(fd, "\n", sizeof(char));
+  printf("%d %d %d\n", list[0].sysCalls[0], list[0].sysCalls[1], list[0].sysCalls[2]);
+  for(i = 0; i<n;++i){
+    for(j = 0; j<ngramSize;++j){
+      sprintf(buf, "%d", list[i].sysCalls[j]);
+      write(fd, buf, sizeof(char) * strlen(buf));
+      write(fd, " ", sizeof(char));
+    }
+    write(fd, "\n", sizeof(char));
+    
+  }
+  
+  close(fd);
+  
 }
