@@ -102,6 +102,9 @@ int run_defense_mode(char *pathname, char** new_argv, int ngramSize){
 
   if(!intrusion)
     printf("IDS did not detect any intrusions\n");
+  else{
+    printf("There was an inrustion\n");
+  }
 
   return 0;
 }
