@@ -4,5 +4,5 @@ int main(int argc, char** argv) {
     strncpy(buffer, argv[1], 100);
     printf(buffer);
     printf("\n");
-    return 0;
+    exit(0);
 }

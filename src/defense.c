@@ -138,7 +138,6 @@ void writeErrorLog(ngram *list, char *programName, int ngramSize, int n){
   //  printf("%d %d %d\n", ngramSize, n, fd);
   
   write(fd, "\n", sizeof(char));
-  printf("%d %d %d\n", list[0].sysCalls[0], list[0].sysCalls[1], list[0].sysCalls[2]);
   for(i = 0; i<n;++i){
     for(j = 0; j<ngramSize;++j){
       sprintf(buf, "%d", list[i].sysCalls[j]);
