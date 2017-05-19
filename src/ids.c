@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
 	char **new_argv = malloc(sizeof(char**) * (argc-1) );
 	new_argv[0] = pathname;
 	int i, j;
-	for(i = 1, j = 3; j<argc; i++, j++){
+	for(i = 1, j = 4; j<argc; i++, j++){
 	  new_argv[i] = argv[j];
 	  
 	}
