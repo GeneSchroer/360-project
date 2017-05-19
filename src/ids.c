@@ -38,7 +38,7 @@ int main(int argc, char* argv[]){
 	
 	opt = argv[1][1];
 	nSize = atoi(argv[2]);
-	printf("%d\n", nSize);
+
 	switch(opt){
 	case 'D':
 	  printf("Running Defense Mode\n");

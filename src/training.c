@@ -16,9 +16,6 @@ void run_training_mode(char *pathname, char** new_argv, int ngramSize){
 
   //printNgrams(ngrams);
   writeProfile(programProfile, programName);
-
-  // TODO fix this
-  //freeProfile(*programProfile);
   
   return;
 }
