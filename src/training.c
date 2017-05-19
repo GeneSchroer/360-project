@@ -15,7 +15,6 @@ void run_training_mode(char *pathname, char** new_argv, int ngramSize){
   insertNgrams(programProfile, ngrams);
 
   //printNgrams(ngrams);
-
   writeProfile(programProfile, programName);
 
   // TODO fix this

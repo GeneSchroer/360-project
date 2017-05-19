@@ -96,9 +96,9 @@ int run_defense_mode(char *pathname, char** new_argv, int ngramSize){
 	    list[n].sysCalls = malloc(sizeof(int) * ngramSize);
 	    
 	  }
-	
+	  
 	}
-    
+	
 
       }	       
 
@@ -112,6 +112,9 @@ int run_defense_mode(char *pathname, char** new_argv, int ngramSize){
 
   if(!intrusion)
     printf("IDS did not detect any intrusions\n");
+  else{
+    printf("There was an inrustion\n");
+  }
 
   return 0;
 }
@@ -131,7 +134,7 @@ void writeErrorLog(ngram *list, char *programName, int ngramSize, int n){
   char buf[5];
   int fd = open(errorLog, O_WRONLY | O_APPEND | O_CREAT,
 	   S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-
+  
   //  printf("%d %d %d\n", ngramSize, n, fd);
   
   write(fd, "\n", sizeof(char));

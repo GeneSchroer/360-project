@@ -1,0 +1,2 @@
+No Attack: Any input less than 6 characters
+Attack: Any input with more than 6 characters
